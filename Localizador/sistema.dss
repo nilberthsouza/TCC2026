@@ -1,0 +1,132 @@
+Clear
+
+New Circuit.Sistema
+~ basekv=13.8
+~ pu=1.0
+~ phases=3
+~ bus1=P1
+
+Edit Vsource.Source
+~ bus1=P1.1.2.3
+~ basekv=13.8
+~ pu=1.0
+~ phases=3
+~ MVAsc3=500
+~ MVAsc1=500
+! ============================================================
+! TRANSFORMADOR T1 (P1 -> P2)
+! 40 MVA, 13.8 / 69 kV, Δ/Y, X = 3.2%
+! ============================================================
+New Transformer.T1
+~ phases=3
+~ windings=2
+~ xhl=3.2
+~ %noloadloss=0
+~ %loadloss=0
+
+~ wdg=1
+~   bus=P1.1.2.3
+~   kv=13.8
+~   kva=40000
+~   conn=delta
+
+~ wdg=2
+~   bus=P2.1.2.3.0 !adcionei o neutro
+~   kv=69
+~   kva=40000
+~   conn=wye
+~ %r=0.1 !adcionei
+
+!aterramento
+New Reactor.GND_P2
+~ phases=1
+~ bus1=P2.0
+~ R=0.001
+~ X=0
+
+! ============================================================
+! LINHA 1 (P2 -> P3)
+! 20 km, r=0.2 Ω/km, x=0.5 Ω/km
+! ============================================================
+New LineCode.LC69
+~ nphases=3
+~ r1=0.2
+~ x1=0.5
+~ r0=0.2
+~ x0=0.5
+~ c1=0
+~ c0=0
+~ units=km
+
+New Line.L1
+~ phases=3
+~ bus1=P2.1.2.3
+~ bus2=P3.1.2.3
+~ linecode=LC69
+~ length=20
+~ units=km
+
+! ============================================================
+! LINHA 2 (P3 -> P4)
+! ============================================================
+New Line.L2
+~ phases=3
+~ bus1=P3.1.2.3
+~ bus2=P4.1.2.3
+~ linecode=LC69
+~ length=20
+~ units=km
+
+! ============================================================
+! TRANSFORMADOR T2 (P4 -> P5)
+! 10 MVA, 69 / 13.8 kV, Δ/Y, X = 5%
+! ============================================================
+New Transformer.T2
+~ phases=3
+~ windings=2
+~ xhl=5.0
+~ %noloadloss=0
+~ %loadloss=0
+
+~ wdg=1
+~   bus=P4.1.2.3
+~   kv=69
+~   kva=10000
+~   conn=delta
+
+~ wdg=2
+~   bus=P5.1.2.3.0
+~   kv=13.8
+~   kva=10000
+~   conn=wye
+
+!aterramento
+New Reactor.GND_P5
+~ phases=1
+~ bus1=P5.0
+~ R=0.001
+~ X=0
+! ============================================================
+! CARGA EM P5
+! 8 MVA, fp = 0.85
+! ============================================================
+New Load.CargaP5
+~ phases=3
+~ bus1=P5.1.2.3
+~ kv=13.8
+~ kw=6800
+~ kvar=4219
+~ model=1
+
+Set voltagebases=[13.8, 69]
+CalcVoltageBases
+
+Set maxiter=100
+Set tolerance=0.0001
+
+
+Solve mode=faultstudy
+Set Bus=P2
+? zsc012
+? Vsource.Source.MVAsc3
+? Vsource.Source.Z1

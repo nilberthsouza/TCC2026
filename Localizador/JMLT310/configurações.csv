@@ -1,0 +1,8 @@
+Configuração,Descrição
+intAdequarTensaoCargasMT,Adequação de Tensão Mínima das Cargas MT (0.93 pu)
+intAdequarTensaoCargasBT,Adequação de Tensão Mínima das Cargas BT (0.92 pu)
+intAdequarTensaoSuperior,Limitar Máxima Tensão de Barras e Reguladores (1.05 pu)
+intAdequarModeloCarga = 1,Adequa modelo das cargas(model=2/model=3)
+intAdequarPotenciaCarga,Limitar Cargas BT (Potência ativa do transformador)
+intAdequarTapTrafo,Utilizar Tap nos Transformadores
+dblVPUMin,Tensão mínima(pu)=0.5

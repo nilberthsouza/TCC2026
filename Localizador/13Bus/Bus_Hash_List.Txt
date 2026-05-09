@@ -1,0 +1,55 @@
+Number of Hash Lists = 6, Number of Elements = 16
+
+Hash List Distribution
+List = 1, Number of elements = 4
+List = 2, Number of elements = 1
+List = 3, Number of elements = 3
+List = 4, Number of elements = 1
+List = 5, Number of elements = 4
+List = 6, Number of elements = 3
+
+List = 1, Number of elements = 4
+"sourcebus"  Idx= 1
+"650"  Idx= 2
+"rg60"  Idx= 3
+"634"  Idx= 5
+
+List = 2, Number of elements = 1
+"645"  Idx= 7
+
+List = 3, Number of elements = 3
+"646"  Idx= 8
+"652"  Idx= 12
+"684"  Idx= 16
+
+List = 4, Number of elements = 1
+"675"  Idx= 10
+
+List = 5, Number of elements = 4
+"692"  Idx= 9
+"670"  Idx= 13
+"632"  Idx= 14
+"680"  Idx= 15
+
+List = 6, Number of elements = 3
+"633"  Idx= 4
+"671"  Idx= 6
+"611"  Idx= 11
+
+LINEAR LISTING...
+  1 = "sourcebus"
+  2 = "650"
+  3 = "rg60"
+  4 = "633"
+  5 = "634"
+  6 = "671"
+  7 = "645"
+  8 = "646"
+  9 = "692"
+ 10 = "675"
+ 11 = "611"
+ 12 = "652"
+ 13 = "670"
+ 14 = "632"
+ 15 = "680"
+ 16 = "684"
