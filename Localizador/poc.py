@@ -231,12 +231,12 @@ print(thevenin_reais)
 # =====================================================
 # FALTA MONOFÁSICA NA BARRA fault_location
 # =====================================================
-fault_location = "848"  # altere conforme necessário
+fault_location = "850"
 
-try:
-    dss.text("Remove Fault.F1F")
-except:
-    pass
+# Recompila para garantir circuito limpo sem faltas anteriores
+dss.text(r"compile C:\Users\nilbe\Documents\DISCIPLINAS\TCC2026\Localizador\34Bus\34busModTotal953mi.dss")
+dss.text("New EnergyMeter.M1 Element=Line.L5 Terminal=1")
+dss.solution.solve()
 
 dss.text(f"New Fault.F1F Bus1={fault_location}.1.0 Phases=1 R=0.0001")
 dss.solution.solve()
@@ -248,8 +248,8 @@ v_falta = dss.bus.vmag_angle
 tensoes_falta_reais = []
 print("\n================ TENSÕES PÓS-FALTA (relay_position) ================")
 for i in range(0, 6, 2):
-    mag  = v_falta[i]
-    ang  = v_falta[i + 1]
+    mag = v_falta[i]
+    ang = v_falta[i + 1]
     tensoes_falta_reais.append((mag, ang))
     print(f"Fase {i//2+1}: {mag/Vbase:.6f} pu ∠ {ang:.2f}°")
 
@@ -260,8 +260,8 @@ curr_falta = dss.cktelement.currents_mag_ang
 correntes_falta_reais = []
 print("\n================ CORRENTES PÓS-FALTA (relay_position) ================")
 for i in range(6, 12, 2):
-    mag  = curr_falta[i]
-    ang  = curr_falta[i + 1]
+    mag = curr_falta[i]
+    ang = curr_falta[i + 1]
     correntes_falta_reais.append((mag, ang))
     print(f"Fase {((i-6)//2)+1}: {mag/Ibase:.6f} pu ∠ {ang:.2f}°")
 
@@ -271,7 +271,6 @@ print(correntes_falta_reais)
 # =====================================================
 # COMPONENTES SIMÉTRICAS DA CORRENTE (Fortescue)
 # =====================================================
-# Monta vetor fasorial Iabc
 Iabc = np.array([
     complex(correntes_falta_reais[0][0] * math.cos(math.radians(correntes_falta_reais[0][1])),
             correntes_falta_reais[0][0] * math.sin(math.radians(correntes_falta_reais[0][1]))),
@@ -281,9 +280,7 @@ Iabc = np.array([
             correntes_falta_reais[2][0] * math.sin(math.radians(correntes_falta_reais[2][1]))),
 ], dtype=complex)
 
-# I012 = Ainv @ Iabc
-I012 = Ainv @ Iabc   # [I0, I1, I2]
-
+I012 = Ainv @ Iabc
 If0 = I012[0]
 If1 = I012[1]
 If2 = I012[2]
@@ -294,7 +291,7 @@ print(f"If1: {(If1/Ibase).real:+.6f} {(If1/Ibase).imag:+.6f}j pu  |  |If1| = {ab
 print(f"If2: {(If2/Ibase).real:+.6f} {(If2/Ibase).imag:+.6f}j pu  |  |If2| = {abs(If2)/Ibase:.6f} pu ∠ {math.degrees(np.angle(If2)):.2f}°")
 
 # =====================================================
-# TENSÃO DE THÉVENIN (Vth = tensão pré-falta fase A na relay_position)
+# TENSÃO DE THÉVENIN (pré-falta fase A na relay_position)
 # =====================================================
 mag_vth    = tensoes_prefalta_reais[0][0]
 ang_vth    = tensoes_prefalta_reais[0][1]
@@ -303,14 +300,11 @@ Vth        = complex(mag_vth * math.cos(math.radians(ang_vth)),
 Vth_pu     = Vth / Vbase
 
 # =====================================================
-# TENSÕES DE SEQUÊNCIA NO RELAY (modelo circuito de sequência)
-# Vs1 = Vth - If1 * Zth1
-# Vs2 = 0   - If2 * Zth2
-# Vs0 = 0   - If0 * Zth0
+# TENSÕES DE SEQUÊNCIA NO RELAY
 # =====================================================
-Vs1 = Vth - If1 * Zth1
-Vs2 =     - If2 * Zth2
-Vs0 =     - If0 * Zth0
+Vs1 = Vth  - If1 * Zth1
+Vs2 =      - If2 * Zth2
+Vs0 =      - If0 * Zth0
 
 Vs1_pu = Vs1 / Vbase
 Vs2_pu = Vs2 / Vbase
@@ -322,7 +316,7 @@ print(f"Vs2: {Vs2_pu.real:+.6f} {Vs2_pu.imag:+.6f}j pu  |  |Vs2| = {abs(Vs2_pu):
 print(f"Vs0: {Vs0_pu.real:+.6f} {Vs0_pu.imag:+.6f}j pu  |  |Vs0| = {abs(Vs0_pu):.6f} pu ∠ {math.degrees(np.angle(Vs0_pu)):.2f}°")
 
 # =====================================================
-# V_monitor = Vs1 + Vs2 + Vs0  (tensão fase A reconstituída)
+# V_monitor = Vs1 + Vs2 + Vs0
 # =====================================================
 V_monitor    = Vs1 + Vs2 + Vs0
 V_monitor_pu = V_monitor / Vbase
@@ -334,10 +328,10 @@ print(f"V_monitor: {abs(V_monitor_pu):.6f} pu ∠ {math.degrees(np.angle(V_monit
 # =====================================================
 # COMPARAÇÃO COM TENSÃO REAL DO OPENDSS (fase A relay)
 # =====================================================
-mag_real  = tensoes_falta_reais[0][0]
-ang_real  = tensoes_falta_reais[0][1]
-V_relay   = complex(mag_real * math.cos(math.radians(ang_real)),
-                    mag_real * math.sin(math.radians(ang_real)))
+mag_real   = tensoes_falta_reais[0][0]
+ang_real   = tensoes_falta_reais[0][1]
+V_relay    = complex(mag_real * math.cos(math.radians(ang_real)),
+                     mag_real * math.sin(math.radians(ang_real)))
 V_relay_pu = V_relay / Vbase
 
 erro_mag = abs(abs(V_monitor_pu) - abs(V_relay_pu))
@@ -349,7 +343,8 @@ print(f"V_monitor (modelo): {V_monitor_pu.real:+.6f} {V_monitor_pu.imag:+.6f}j p
 print(f"\nErro magnitude: {erro_mag:.6f} pu  ({erro_mag*100:.4f}%)")
 print(f"Erro ângulo:    {erro_ang:.4f}°")
 
-# Restaura circuito
-dss.text("Remove Fault.F1F")
-dss.text("Set Mode=Snap")
+# =====================================================
+# RESTAURA CIRCUITO ORIGINAL
+# =====================================================
+dss.text(r"compile C:\Users\nilbe\Documents\DISCIPLINAS\TCC2026\Localizador\34Bus\34busModTotal953mi.dss")
 dss.solution.solve()
