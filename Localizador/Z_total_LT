@@ -1,0 +1,72 @@
+import re
+import numpy as np
+
+# =====================================================
+# CÁLCULO DE IMPEDÂNCIA TOTAL (Z1) PARA TAKAGI
+# =====================================================
+
+def parse_linecodes(file_path):
+    """Extrai os parâmetros das matrizes R e X dos linecodes."""
+    linecodes = {}
+    with open(file_path, 'r') as f:
+        content = f.read()
+        
+    # Busca por blocos de New linecode
+    blocks = re.split(r'(?i)New\s+linecode\.', content)[1:]
+    
+    for block in blocks:
+        name = block.split()[0].strip()
+        # Captura as matrizes rmatrix e xmatrix (ignorando as comentadas !!!)
+        r_match = re.search(r'(?i)^\s*~\s*rmatrix\s*=\s*\[?([^\]\n]+)\]?', block, re.MULTILINE)
+        x_match = re.search(r'(?i)^\s*~\s*xmatrix\s*=\s*\[?([^\]\n]+)\]?', block, re.MULTILINE)
+        
+        if r_match and x_match:
+            r_vals = [float(x) for x in re.findall(r'[-+]?\d*\.\d+|\d+', r_match.group(1))]
+            x_vals = [float(x) for x in re.findall(r'[-+]?\d*\.\d+|\d+', x_match.group(1))]
+            
+            # Monta matriz 3x3 (assumindo que os dados são a triangular inferior)
+            R = np.array([[r_vals[0], r_vals[1], r_vals[2]], 
+                          [r_vals[1], r_vals[3], r_vals[4]], 
+                          [r_vals[2], r_vals[4], r_vals[5]]])
+            
+            X = np.array([[x_vals[0], x_vals[1], x_vals[2]], 
+                          [x_vals[1], x_vals[3], x_vals[4]], 
+                          [x_vals[2], x_vals[4], x_vals[5]]])
+            
+            # Calcula Z de sequência 0, 1, 2
+            # Z1 = (Zaa + Zbb + Zcc)/3 - (Zab + Zbc + Zca)/3 (Simplificado para sistemas transpostos)
+            # Para maior precisão em sistemas OpenDSS, usamos a transformação de Fortescue:
+            a = cmath.exp(1j * 2 * math.pi / 3)
+            A = np.array([[1, 1, 1], [1, a**2, a], [1, a, a**2]])
+            Z_abc = R + 1j * X
+            Z_012 = np.linalg.inv(A) @ Z_abc @ A
+            
+            linecodes[name] = Z_012[1, 1] # Pega o elemento de sequência positiva (Z1)
+            
+    return linecodes
+
+def calcular_impedancia_total_linha(linhas_file, linecodes_file, nome_linha):
+    """
+    Calcula ZL = Z1_unitaria * Comprimento
+    """
+    z1_dict = parse_linecodes(linecodes_file)
+    
+    with open(linhas_file, 'r') as f:
+        for line in f:
+            if f"Line.{nome_linha}" in line or f"line.{nome_linha}" in line:
+                # Extrai Length e LineCode
+                length = float(re.search(r'(?i)Length\s*=\s*([\d.]+)', line).group(1))
+                lcode = re.search(r'(?i)LineCode\s*=\s*(\w+)', line).group(1)
+                
+                z1_unitario = z1_dict.get(lcode)
+                
+                if z1_unitario:
+                    return z1_unitario * length
+                else:
+                    raise ValueError(f"LineCode {lcode} não encontrado.")
+    
+    return None
+
+# Exemplo de chamada:
+# ZL = calcular_impedancia_total_linha('linhas.dss', 'linecodes.dss', 'L1')
+# print(f"Impedância Total para Takagi (ZL): {ZL} Ohms")
