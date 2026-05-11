@@ -6,7 +6,6 @@ dss = py_dss_interface.DSS()
 # =====================================================
 # CONFIGURAÇÕES
 # =====================================================
-#DSS_FILE       = r"C:\Users\nilbe\Documents\DISCIPLINAS\TCC2026\Localizador\34Bus\34busModTotal953mi.dss"
 DSS_FILE       = r"C:\Users\nilbe\Documents\DISCIPLINAS\TCC2026\Localizador\34Bus\34busModTotal14mi.dss"
 RELAY_BUS      = "812"
 RELAY_LINE     = "Line.L5"       # linha monitorada (terminal 2 = lado do relay)
@@ -100,30 +99,47 @@ def get_thevenin_seq_impedances(bus: str) -> tuple[complex, complex]:
     return Z012[0, 0], Z012[1, 1]   # Z0eq, Z1eq
 
 
-def get_line_series_impedance(element: str) -> complex:
+def get_line_impedance_per_mile(element: str) -> complex:
     """
-    Extrai a impedância série total de sequência positiva da linha (Ω).
-    Usa os parâmetros diretos via dss.lines:
-      ZL = (R1 + jX1) * length
-    onde R1 e X1 estão em Ω/unidade-de-comprimento e length na mesma unidade.
+    Retorna a impedância de sequência positiva por milha da linha (Ω/mi).
+    O Takagi recebe esta grandeza como ZL, e seu resultado d já sai em milhas.
     """
     line_name = element.split(".")[-1]
     dss.lines.name = line_name
-    r1     = dss.lines.r1       # Ω/unidade
-    x1     = dss.lines.x1       # Ω/unidade
-    length = dss.lines.length   # unidade de comprimento (consistente com r1/x1)
+    r1 = dss.lines.r1      # Ω/unidade-de-comprimento
+    x1 = dss.lines.x1      # Ω/unidade-de-comprimento
+    # r1/x1 estão por milha quando o circuito usa milhas — retorna direto
+    return complex(r1, x1)
+
+
+def get_line_total_impedance(element: str) -> complex:
+    """
+    Retorna a impedância série total da linha (Ω):
+      ZL_total = (R1 + jX1) * length
+    """
+    line_name = element.split(".")[-1]
+    dss.lines.name = line_name
+    r1     = dss.lines.r1
+    x1     = dss.lines.x1
+    length = dss.lines.length
     return complex(r1 * length, x1 * length)
 
-def takagi(Vs: complex, Is: complex, Is_pre: complex, ZL: complex) -> float | None:
+def takagi(Vs: complex, Is: complex, Is_pre: complex, ZL_per_mi: complex) -> float | None:
     """
-    Distância da falta em p.u. pelo método de Takagi.
+    Distância da falta em milhas pelo método de Takagi.
+
+    A fórmula canônica é:
       d = Im(Vs · ΔIs*) / Im(ZL · Is · ΔIs*)
+
+    Quando ZL é dado em Ω/mi, d sai diretamente em milhas.
+    A corrente Is deve fluir no sentido relay → falta (positivo para a frente).
+
     Retorna None se o denominador for nulo.
     """
     dI      = Is - Is_pre
     dI_conj = np.conj(dI)
     num     = np.imag(Vs * dI_conj)
-    den     = np.imag(ZL * Is * dI_conj)
+    den     = np.imag(ZL_per_mi * Is * dI_conj)
     return None if np.isclose(den, 0.0) else num / den
 
 
@@ -214,26 +230,62 @@ for label, Z in (("Z0eq", Z0eq), ("Z1eq", Z1eq)):
           f"  |  |Z| = {abs(Zpu):.6f} pu")
 
 # =====================================================
-# ETAPA 6 — IMPEDÂNCIA SÉRIE DA LINHA (Takagi)
+# ETAPA 6 — IMPEDÂNCIA DA LINHA (Takagi usa Ω/mi)
 # =====================================================
 compile_circuit(add_meter=True)
-ZL = get_line_series_impedance(RELAY_LINE)
+ZL_per_mi   = get_line_impedance_per_mile(RELAY_LINE)
+ZL_total    = get_line_total_impedance(RELAY_LINE)
 
-section(f"IMPEDÂNCIA SÉRIE DA LINHA  {RELAY_LINE}")
-ZL_pu = ZL / Zbase
-print(f"  ZL  :  {ZL.real:>+10.6f} {ZL.imag:>+10.6f}j Ω"
-      f"  |  |ZL| = {abs(ZL):>10.6f} Ω"
-      f"  →  {ZL_pu.real:>+10.6f} {ZL_pu.imag:>+10.6f}j pu")
-print(f"  Comprimento total da linha : {LINE_LENGTH_MI:.4f} mi")
+section(f"IMPEDÂNCIA DA LINHA  {RELAY_LINE}")
+ZL_total_pu = ZL_total / Zbase
+ZL_mi_pu    = ZL_per_mi / Zbase
+print(f"  ZL total  :  {ZL_total.real:>+10.6f} {ZL_total.imag:>+10.6f}j Ω"
+      f"  →  {ZL_total_pu.real:>+10.6f} {ZL_total_pu.imag:>+10.6f}j pu")
+print(f"  ZL/mi     :  {ZL_per_mi.real:>+10.6f} {ZL_per_mi.imag:>+10.6f}j Ω/mi"
+      f"  →  {ZL_mi_pu.real:>+10.6f} {ZL_mi_pu.imag:>+10.6f}j pu/mi")
+print(f"  Comprimento da linha {RELAY_LINE}  : {dss.lines.length:.4f} mi")
+
+
+# =====================================================
+# DIAGNÓSTICO — inspeciona valores brutos da linha
+# =====================================================
+print("\n[DIAG] Valores brutos dss.lines para", RELAY_LINE)
+line_name = RELAY_LINE.split(".")[-1]
+dss.lines.name = line_name
+print(f"  r1          = {dss.lines.r1}")
+print(f"  x1          = {dss.lines.x1}")
+print(f"  r0          = {dss.lines.r0}")
+print(f"  x0          = {dss.lines.x0}")
+print(f"  length      = {dss.lines.length}")
+print(f"  units       = {dss.lines.units}")   # 0=none,1=mi,2=kft,3=km,4=m,5=ft,6=in,7=cm
+print(f"  normamps    = {dss.lines.norm_amps}")
+# Rmatrix e Xmatrix (por milha, sequência de fase)
+try:
+    print(f"  rmatrix     = {dss.lines.rmatrix}")
+    print(f"  xmatrix     = {dss.lines.xmatrix}")
+except Exception as e:
+    print(f"  rmatrix/xmatrix: {e}")
+# Verifica ZL implícita: se ZL_total = r1*length, qual comprimento faz sentido?
+r1 = dss.lines.r1; x1 = dss.lines.x1; length = dss.lines.length
+print(f"\n  ZL_per_mi (r1, x1)        = {r1:.6f} + {x1:.6f}j Ω/mi")
+print(f"  ZL_total  (r1*len,x1*len) = {r1*length:.6f} + {x1*length:.6f}j Ω")
+print(f"  Se ZL/mi esperada ~0.289+0.600j → ratio r1: {r1/0.289:.4f}, x1: {x1/0.600:.4f}")
+# Distâncias reais de referência: 850=0.62mi → ZL esperada = 0.62 * ZL/mi
+# Os erros foram ~2x → ZL/mi atual pode estar dobrada
+print(f"\n  Fator de escala implícito nos erros: ~{1.4385/0.620:.4f}x (850)")
+print(f"  Ou seja, ZL efetiva usada é {1.4385/0.620:.4f}x maior que deveria")
 
 # =====================================================
 # ETAPA 7 — TAKAGI PARA CADA BARRA DE FALTA
 # =====================================================
+# Sinal da corrente: terminal 2 da linha, sentido convencional OpenDSS é
+# positivo entrando na barra 812. Takagi precisa da corrente saindo do relay
+# em direção à falta, então negamos Is (inversão de sentido).
 section("LOCALIZADOR DE TAKAGI  —  falta monofásica 1F-T (fase A)")
-print(f"  {'Barra':<8} {'d (pu)':>10}  {'d (mi)':>10}  Va_falta no relay")
+print(f"  {'Barra':<8} {'d (mi)':>10}  Va_falta no relay")
 print(f"  {'-' * W}")
 
-resultados: list[tuple[str, float, float]] = []
+resultados: list[tuple[str, float]] = []
 
 for fault_bus in FAULT_BUSES:
     compile_circuit(add_meter=True)
@@ -243,29 +295,36 @@ for fault_bus in FAULT_BUSES:
     V_fault = get_bus_voltages(RELAY_BUS)
     I_fault = get_line_currents(RELAY_LINE)
 
-    d = takagi(
-        Vs     = V_fault[0],
-        Is     = I_fault[0],
-        Is_pre = I_pre[0],
-        ZL     = ZL,
+    # Corrente medida no terminal 2 (barra 812) entra na barra → negamos
+    # para obter sentido relay → falta, conforme convenção do Takagi
+    Is_fwd     = -I_fault[0]
+    Is_pre_fwd = -I_pre[0]
+
+    d_mi = takagi(
+        Vs        = V_fault[0],
+        Is        = Is_fwd,
+        Is_pre    = Is_pre_fwd,
+        ZL_per_mi = ZL_per_mi,
     )
 
-    if d is not None:
-        d_mi  = d * LINE_LENGTH_MI
+    if d_mi is not None:
         v_str = fmt(V_fault[0], Vln, "V")
-        print(f"  {fault_bus:<8} {d:>10.6f}  {d_mi:>10.4f}  {v_str}")
-        resultados.append((fault_bus, d, d_mi))
+        print(f"  {fault_bus:<8} {d_mi:>10.4f}  {v_str}")
+        resultados.append((fault_bus, d_mi))
     else:
-        print(f"  {fault_bus:<8} {'---':>10}  {'---':>10}  denominador nulo")
+        print(f"  {fault_bus:<8} {'---':>10}  denominador nulo")
 
 # =====================================================
 # RESUMO FINAL
 # =====================================================
-section("RESUMO  —  distâncias estimadas")
-print(f"  {'Barra falta':<14}  {'d (pu)':>10}  {'d (mi)':>10}")
-print(f"  {'-' * 40}")
-for bus, d, d_mi in resultados:
-    print(f"  {bus:<14}  {d:>10.6f}  {d_mi:>10.4f}")
+section("RESUMO  —  distâncias estimadas (Takagi)")
+print(f"  {'Barra falta':<14}  {'d estimado (mi)':>16}  {'Referência (mi)':>16}")
+print(f"  {'-' * 52}")
+ref = {"850": 0.620, "854": 2.180, "822": 3.000, "834": 4.050, "840": 6.750, "848": 7.470}
+for bus, d_mi in resultados:
+    ref_val = ref.get(bus, float("nan"))
+    erro    = abs(d_mi - ref_val)
+    print(f"  {bus:<14}  {d_mi:>16.4f}  {ref_val:>16.3f}  (erro: {erro:.4f} mi)")
 
 # =====================================================
 # RESTAURA CIRCUITO ORIGINAL
