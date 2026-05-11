@@ -1,350 +1,249 @@
 import py_dss_interface
-import math
+import numpy as np
 
 dss = py_dss_interface.DSS()
 
 # =====================================================
-# COMPILA E RESOLVE
+# CONSTANTES
 # =====================================================
-dss.text(r"compile C:\Users\nilbe\Documents\DISCIPLINAS\TCC2026\Localizador\34Bus\34busModTotal953mi.dss")
-dss.solution.solve()
+DSS_FILE    = r"C:\Users\nilbe\Documents\DISCIPLINAS\TCC2026\Localizador\34Bus\34busModTotal953mi.dss"
+RELAY_BUS   = "812"
+FAULT_LINE  = "Line.L5"
+FAULT_BUS   = "850"
+Sbase_MVA   = 40.0
+Sbase       = Sbase_MVA * 1e6
 
-# =====================================================
-# BASES DO SISTEMA
-# =====================================================
-Sbase_MVA = 40.0
-Sbase = Sbase_MVA * 1e6           # VA
-relay_position = "812"
+# Matriz de Fortescue e sua inversa
+_a   = np.exp(1j * 2 * np.pi / 3)
+A    = np.array([[1,    1,      1    ],
+                 [1,    _a**2,  _a   ],
+                 [1,    _a,     _a**2]], dtype=complex)
+Ainv = np.linalg.inv(A)
 
-dss.circuit.set_active_bus(relay_position)
-
-
-print("Barra ativa:", dss.bus.name)
-
-kv_base_ln = dss.bus.kv_base      # kV fase-neutro
-Vbase = kv_base_ln * 1000         # V fase-neutro
-
-Vbase_ll = Vbase * math.sqrt(3)   # tensão linha-linha
-
-Ibase = Sbase / (math.sqrt(3) * Vbase_ll)
-Zbase = (Vbase_ll ** 2) / Sbase
-
-print("\n================ BASES DO SISTEMA ================")
-print(f"Vbase (LN): {Vbase:.2f} V")
-print(f"Vbase (LL): {Vbase_ll:.2f} V")
-print(f"Sbase:      {Sbase:.2f} VA")
-print(f"Ibase:      {Ibase:.4f} A")
-print(f"Zbase:      {Zbase:.6f} ohms")
 
 # =====================================================
-# TENSÕES PRÉ-FALTA
+# FUNÇÕES AUXILIARES
 # =====================================================
-v = dss.bus.vmag_angle
 
-# vetor para armazenar tensões reais
-tensoes_prefalta_reais = []
+def compile_circuit(add_meter: bool = False) -> None:
+    """Recompila o circuito e opcionalmente adiciona o EnergyMeter."""
+    dss.text(f"compile {DSS_FILE}")
+    if add_meter:
+        dss.text(f"New EnergyMeter.M1 Element={FAULT_LINE} Terminal=1")
+    dss.solution.solve()
 
-print("\n================ TENSÕES PRÉ-FALTA ================")
 
-for i in range(0, len(v), 2):
-    mag_v = v[i]
-    ang = v[i + 1]
+def polar_to_complex(mag: float, ang_deg: float) -> complex:
+    """Converte magnitude + ângulo (graus) para número complexo via NumPy."""
+    ang_rad = np.deg2rad(ang_deg)
+    return mag * (np.cos(ang_rad) + 1j * np.sin(ang_rad))
 
-    tensoes_prefalta_reais.append((mag_v, ang))
 
-    mag_pu = mag_v / Vbase
-    fase = i // 2 + 1
+def get_bus_voltages(bus: str, n_phases: int = 3) -> np.ndarray:
+    """
+    Retorna array complexo de tensões de fase na barra informada.
+    Shape: (n_phases,)
+    """
+    dss.circuit.set_active_bus(bus)
+    v = dss.bus.vmag_angle
+    return np.array(
+        [polar_to_complex(v[2*k], v[2*k + 1]) for k in range(n_phases)],
+        dtype=complex
+    )
 
-    print(f"Fase {fase}: {mag_pu:.4f} pu ∠ {ang:.2f}°")
 
-print("\nVetor tensões reais:")
-print(tensoes_prefalta_reais)
+def get_line_currents(element: str, terminal: int = 2, n_phases: int = 3) -> np.ndarray:
+    """
+    Retorna array complexo de correntes no terminal indicado do elemento.
+    terminal=1 → índices 0-5; terminal=2 → índices 6-11.
+    Shape: (n_phases,)
+    """
+    dss.circuit.set_active_element(element)
+    curr = dss.cktelement.currents_mag_ang
+    offset = (terminal - 1) * 2 * n_phases
+    return np.array(
+        [polar_to_complex(curr[offset + 2*k], curr[offset + 2*k + 1])
+         for k in range(n_phases)],
+        dtype=complex
+    )
+
+
+def abc_to_012(Vabc: np.ndarray) -> np.ndarray:
+    """Transforma vetor de fase (ABC) em componentes de sequência (012)."""
+    return Ainv @ Vabc
+
+
+def compute_bases(bus: str) -> tuple[float, float, float, float]:
+    """
+    Calcula bases do sistema a partir da tensão base da barra.
+    Retorna: (Vbase_ln, Vbase_ll, Ibase, Zbase) em V / A / Ω.
+    """
+    dss.circuit.set_active_bus(bus)
+    Vbase_ln = dss.bus.kv_base * 1e3
+    Vbase_ll = Vbase_ln * np.sqrt(3)
+    Ibase    = Sbase / (np.sqrt(3) * Vbase_ll)
+    Zbase    = Vbase_ll**2 / Sbase
+    return Vbase_ln, Vbase_ll, Ibase, Zbase
+
+
+def compute_thevenin_impedances(relay_bus: str, Zbase: float) -> tuple[complex, complex, complex]:
+    """
+    Calcula as impedâncias de Thévenin de sequência (Z0, Z1, Z2)
+    na barra relay_bus a partir da Zbus (pinv da Ybus).
+    Retorna: (Zth0, Zth1, Zth2) em Ω.
+    """
+    y_flat    = dss.circuit.system_y
+    y_complex = np.array(y_flat[0::2]) + 1j * np.array(y_flat[1::2])
+    n         = int(np.sqrt(len(y_complex)))
+    Ybus      = y_complex.reshape((n, n))
+    Zbus      = np.linalg.pinv(Ybus)
+
+    nodes = dss.circuit.y_node_order
+    idx   = [
+        nodes.index(f"{relay_bus}.1"),
+        nodes.index(f"{relay_bus}.2"),
+        nodes.index(f"{relay_bus}.3"),
+    ]
+
+    Zabc = Zbus[np.ix_(idx, idx)]
+    Z012 = Ainv @ Zabc @ A
+
+    return Z012[0, 0], Z012[1, 1], Z012[2, 2]
+
+
+def print_phase_a(label: str, value: complex, base: float, real_unit: str = "V") -> None:
+    """
+    Imprime magnitude e ângulo da fase A em unidades reais e em pu.
+    real_unit: unidade física do valor real (ex: 'V', 'A', 'Ω').
+    """
+    val_pu  = value / base
+    mag     = abs(value)
+    mag_pu  = abs(val_pu)
+    ang_deg = np.degrees(np.angle(value))
+    print(f"  [{label}]  Fase A:"
+          f"  {mag:.4f} {real_unit} ∠ {ang_deg:.2f}°"
+          f"  |  {mag_pu:.6f} pu ∠ {ang_deg:.2f}°"
+          f"  ({value.real:+.4f}{value.imag:+.4f}j {real_unit})")
+
 
 # =====================================================
-# CORRENTES PRÉ-FALTA
+# COMPILAÇÃO E BASES
 # =====================================================
-dss.circuit.set_active_element("Line.L5")
-curr = dss.cktelement.currents_mag_ang
+compile_circuit()
+Vbase_ln, Vbase_ll, Ibase, Zbase = compute_bases(RELAY_BUS)
 
-# lado da barra 812 = terminal 2
-correntes_prefalta_reais = []
-
-print("\n================ CORRENTES PRÉ-FALTA ================")
-
-for i in range(6, 12, 2):   # terminal 2
-    mag = curr[i]
-    ang = curr[i + 1]
-
-    correntes_prefalta_reais.append((mag, ang))
-
-    mag_pu = mag / Ibase
-    fase = ((i - 6) // 2) + 1
-
-    print(f"Fase {fase}: {mag_pu:.4f} pu ∠ {ang:.2f}°")
-
-print("\nVetor correntes reais:")
-print(correntes_prefalta_reais)
+print("================ BASES DO SISTEMA ================")
+print(f"  Vbase (LN): {Vbase_ln:.2f} V")
+print(f"  Vbase (LL): {Vbase_ll:.2f} V")
+print(f"  Sbase:      {Sbase:.2f} VA")
+print(f"  Ibase:      {Ibase:.4f} A")
+print(f"  Zbase:      {Zbase:.6f} Ω")
 
 # =====================================================
-# ADICIONA ENERGYMETER (necessário para zonas de falta)
+# PRÉ-FALTA
 # =====================================================
-dss.text("New EnergyMeter.M1 Element=Line.L5 Terminal=1")
-dss.solution.solve()
+V_prefault = get_bus_voltages(RELAY_BUS)     # (3,) complex  [V]
+I_prefault = get_line_currents(FAULT_LINE)   # (3,) complex  [A]
+
+print("\n================ PRÉ-FALTA (fase A) ================")
+print_phase_a("tensão",   V_prefault[0], Vbase_ln, real_unit="V")
+print_phase_a("corrente", I_prefault[0], Ibase,    real_unit="A")
 
 # =====================================================
 # CURTO-CIRCUITO TRIFÁSICO (3F)
 # =====================================================
-dss.text(f"New Fault.F3F Bus1={relay_position} Phases=3 R=0.0001")
+compile_circuit(add_meter=True)
+dss.text(f"New Fault.F3F Bus1={RELAY_BUS} Phases=3 R=0.0001")
 dss.solution.solve()
 
-dss.circuit.set_active_element("Line.L5")
-curr_cc3f = dss.cktelement.currents_mag_ang
+I_cc3f = get_line_currents(FAULT_LINE)
 
-correntes_cc3f_reais = []
-print("\n================ CURTO-CIRCUITO TRIFÁSICO (3F) ================")
-for i in range(6, 12, 2):
-    mag = curr_cc3f[i]
-    ang = curr_cc3f[i + 1]
-    correntes_cc3f_reais.append((mag, ang))
-    mag_pu = mag / Ibase
-    fase = ((i - 6) // 2) + 1
-    print(f"Fase {fase}: {mag_pu:.4f} pu ∠ {ang:.2f}°  |  {mag:.4f} A ∠ {ang:.2f}°")
+print("\n================ CURTO TRIFÁSICO — fase A ================")
+print_phase_a("Icc3F", I_cc3f[0], Ibase, real_unit="A")
 
-print("\nVetor correntes reais CC3F (A):")
-print(correntes_cc3f_reais)
-
-# Recompila para limpar a falta antes do próximo curto
-dss.text(r"compile C:\Users\nilbe\Documents\DISCIPLINAS\TCC2026\Localizador\34Bus\34busModTotal953mi.dss")
-dss.text("New EnergyMeter.M1 Element=Line.L5 Terminal=1")
+# =====================================================
+# CURTO-CIRCUITO MONOFÁSICO (1F-T) — fase A
+# =====================================================
+compile_circuit(add_meter=True)
+dss.text(f"New Fault.F1F Bus1={RELAY_BUS}.1.0 Phases=1 R=0.0001")
 dss.solution.solve()
 
-# =====================================================
-# CURTO-CIRCUITO MONOFÁSICO (1F-T) — fase A com terra
-# =====================================================
-dss.text(f"New Fault.F1F Bus1={relay_position}.1.0 Phases=1 R=0.0001")
-dss.solution.solve()
+I_cc1f = get_line_currents(FAULT_LINE)
 
-dss.circuit.set_active_element("Line.L5")
-curr_cc1f = dss.cktelement.currents_mag_ang
-
-correntes_cc1f_reais = []
-print("\n================ CURTO-CIRCUITO MONOFÁSICO (1F-T) ================")
-for i in range(6, 12, 2):
-    mag = curr_cc1f[i]
-    ang = curr_cc1f[i + 1]
-    correntes_cc1f_reais.append((mag, ang))
-    mag_pu = mag / Ibase
-    fase = ((i - 6) // 2) + 1
-    print(f"Fase {fase}: {mag_pu:.4f} pu ∠ {ang:.2f}°  |  {mag:.4f} A ∠ {ang:.2f}°")
-
-print("\nVetor correntes reais CC1F (A):")
-print(correntes_cc1f_reais)
-
-# Recompila para restaurar o circuito original
-dss.text(r"compile C:\Users\nilbe\Documents\DISCIPLINAS\TCC2026\Localizador\34Bus\34busModTotal953mi.dss")
-dss.solution.solve()
-
-
-print("\n================ print faltas (pu) ================")
-print(f"{'Fase':<6} {'|Icc3F| (pu)':<16} {'∠ 3F (°)':<14} {'|Icc1F| (pu)':<16} {'∠ 1F (°)'}")
-print("-" * 68)
-for i in range(3):
-    mag3f_pu = correntes_cc3f_reais[i][0] / Ibase
-    ang3f    = correntes_cc3f_reais[i][1]
-    mag1f_pu = correntes_cc1f_reais[i][0] / Ibase
-    ang1f    = correntes_cc1f_reais[i][1]
-    print(f"{i+1:<6} {mag3f_pu:<16.4f} {ang3f:<14.2f} {mag1f_pu:<16.4f} {ang1f:.2f}")
+print("\n================ CURTO MONOFÁSICO — fase A ================")
+print_phase_a("Icc1F", I_cc1f[0], Ibase, real_unit="A")
 
 # =====================================================
-# IMPEDÂNCIAS DE THÉVENIN VIA ZBUS (sequências 0, 1, 2)
+# IMPEDÂNCIAS DE THÉVENIN (sequências)
 # =====================================================
-import numpy as np
-
-# Monta Ybus e inverte para Zbus
-y_flat    = dss.circuit.system_y
-y_complex = np.array(y_flat[0::2]) + 1j * np.array(y_flat[1::2])
-n         = int(np.sqrt(len(y_complex)))
-Ybus      = y_complex.reshape((n, n))
-Zbus      = np.linalg.pinv(Ybus)
-
-nodes = dss.circuit.y_node_order
-
-# Matriz de Fortescue
-a    = np.exp(1j * 2 * np.pi / 3)
-A    = np.array([[1, 1, 1],
-                 [1, a**2, a],
-                 [1, a,    a**2]], dtype=complex)
-Ainv = np.linalg.inv(A)
-
-# Índices da barra 812 (fases 1, 2, 3)
-idx = [
-    nodes.index(f"{relay_position}.1"),
-    nodes.index(f"{relay_position}.2"),
-    nodes.index(f"{relay_position}.3"),
-]
-
-# Bloco 3x3 da barra 812 em coordenadas de fase
-Zabc = Zbus[np.ix_(idx, idx)]
-
-# Converte para componentes de sequência
-Z012 = Ainv @ Zabc @ A
-
-Zth0 = Z012[0, 0]   # sequência zero
-Zth1 = Z012[1, 1]   # sequência positiva
-Zth2 = Z012[2, 2]   # sequência negativa
-
-# Em pu
-Zth0_pu = Zth0 / Zbase
-Zth1_pu = Zth1 / Zbase
-Zth2_pu = Zth2 / Zbase
-
-# Vetor com valores reais para conferência
-thevenin_reais = {
-    "Zabc":    Zabc,
-    "Z012":    Z012,
-    "Zth0_ohm": Zth0,
-    "Zth1_ohm": Zth1,
-    "Zth2_ohm": Zth2,
-    "Zth0_pu":  Zth0_pu,
-    "Zth1_pu":  Zth1_pu,
-    "Zth2_pu":  Zth2_pu,
-}
-
-print("\n================ ZABC (bloco 3x3 barra 812) ================")
-print(Zabc)
-
-print("\n================ Z012 (sequências) ================")
-print(Z012)
+compile_circuit(add_meter=True)
+Zth0, Zth1, Zth2 = compute_thevenin_impedances(RELAY_BUS, Zbase)
 
 print("\n================ IMPEDÂNCIAS DE THÉVENIN ================")
-print(f"Zth0: {Zth0.real:+.6f} {Zth0.imag:+.6f}j ohms  |  |Zth0| = {abs(Zth0):.6f} ohms")
-print(f"Zth1: {Zth1.real:+.6f} {Zth1.imag:+.6f}j ohms  |  |Zth1| = {abs(Zth1):.6f} ohms")
-print(f"Zth2: {Zth2.real:+.6f} {Zth2.imag:+.6f}j ohms  |  |Zth2| = {abs(Zth2):.6f} ohms")
-
-print(f"\nZth0: {Zth0_pu.real:+.6f} {Zth0_pu.imag:+.6f}j pu  |  |Zth0| = {abs(Zth0_pu):.6f} pu")
-print(f"Zth1: {Zth1_pu.real:+.6f} {Zth1_pu.imag:+.6f}j pu  |  |Zth1| = {abs(Zth1_pu):.6f} pu")
-print(f"Zth2: {Zth2_pu.real:+.6f} {Zth2_pu.imag:+.6f}j pu  |  |Zth2| = {abs(Zth2_pu):.6f} pu")
-
-print("\nVetor Thévenin completo:")
-print(thevenin_reais)
+for label, Z in (("Zth0", Zth0), ("Zth1", Zth1), ("Zth2", Zth2)):
+    Zpu = Z / Zbase
+    print(f"  {label}: {Z.real:+.6f} {Z.imag:+.6f}j Ω"
+          f"  →  {Zpu.real:+.6f} {Zpu.imag:+.6f}j pu"
+          f"  |  |Z| = {abs(Zpu):.6f} pu")
 
 # =====================================================
 # FALTA MONOFÁSICA NA BARRA fault_location
 # =====================================================
-fault_location = "850"
-
-# Recompila para garantir circuito limpo sem faltas anteriores
-dss.text(r"compile C:\Users\nilbe\Documents\DISCIPLINAS\TCC2026\Localizador\34Bus\34busModTotal953mi.dss")
-dss.text("New EnergyMeter.M1 Element=Line.L5 Terminal=1")
+compile_circuit(add_meter=True)
+dss.text(f"New Fault.F1F Bus1={FAULT_BUS}.1.0 Phases=1 R=0.0001")
 dss.solution.solve()
 
-dss.text(f"New Fault.F1F Bus1={fault_location}.1.0 Phases=1 R=0.0001")
-dss.solution.solve()
+V_fault = get_bus_voltages(RELAY_BUS)
+I_fault = get_line_currents(FAULT_LINE)
 
-# --- Tensões na barra relay_position ---
-dss.circuit.set_active_bus(relay_position)
-v_falta = dss.bus.vmag_angle
-
-tensoes_falta_reais = []
-print("\n================ TENSÕES PÓS-FALTA (relay_position) ================")
-for i in range(0, 6, 2):
-    mag = v_falta[i]
-    ang = v_falta[i + 1]
-    tensoes_falta_reais.append((mag, ang))
-    print(f"Fase {i//2+1}: {mag/Vbase:.6f} pu ∠ {ang:.2f}°")
-
-# --- Correntes na Line.L5 (relay_position) ---
-dss.circuit.set_active_element("Line.L5")
-curr_falta = dss.cktelement.currents_mag_ang
-
-correntes_falta_reais = []
-print("\n================ CORRENTES PÓS-FALTA (relay_position) ================")
-for i in range(6, 12, 2):
-    mag = curr_falta[i]
-    ang = curr_falta[i + 1]
-    correntes_falta_reais.append((mag, ang))
-    print(f"Fase {((i-6)//2)+1}: {mag/Ibase:.6f} pu ∠ {ang:.2f}°")
-
-print("\nVetor correntes reais pós-falta (A):")
-print(correntes_falta_reais)
+print(f"\n================ PÓS-FALTA em {FAULT_BUS} — fase A ================")
+print_phase_a("tensão",   V_fault[0], Vbase_ln, real_unit="V")
+print_phase_a("corrente", I_fault[0], Ibase,    real_unit="A")
 
 # =====================================================
-# COMPONENTES SIMÉTRICAS DA CORRENTE (Fortescue)
+# COMPONENTES SIMÉTRICAS DA CORRENTE
 # =====================================================
-Iabc = np.array([
-    complex(correntes_falta_reais[0][0] * math.cos(math.radians(correntes_falta_reais[0][1])),
-            correntes_falta_reais[0][0] * math.sin(math.radians(correntes_falta_reais[0][1]))),
-    complex(correntes_falta_reais[1][0] * math.cos(math.radians(correntes_falta_reais[1][1])),
-            correntes_falta_reais[1][0] * math.sin(math.radians(correntes_falta_reais[1][1]))),
-    complex(correntes_falta_reais[2][0] * math.cos(math.radians(correntes_falta_reais[2][1])),
-            correntes_falta_reais[2][0] * math.sin(math.radians(correntes_falta_reais[2][1]))),
-], dtype=complex)
+I012 = abc_to_012(I_fault)        # (3,) → [I0, I1, I2]
+If0, If1, If2 = I012
 
-I012 = Ainv @ Iabc
-If0 = I012[0]
-If1 = I012[1]
-If2 = I012[2]
-
-print("\n================ COMPONENTES SIMÉTRICAS DA CORRENTE (pu) ================")
-print(f"If0: {(If0/Ibase).real:+.6f} {(If0/Ibase).imag:+.6f}j pu  |  |If0| = {abs(If0)/Ibase:.6f} pu ∠ {math.degrees(np.angle(If0)):.2f}°")
-print(f"If1: {(If1/Ibase).real:+.6f} {(If1/Ibase).imag:+.6f}j pu  |  |If1| = {abs(If1)/Ibase:.6f} pu ∠ {math.degrees(np.angle(If1)):.2f}°")
-print(f"If2: {(If2/Ibase).real:+.6f} {(If2/Ibase).imag:+.6f}j pu  |  |If2| = {abs(If2)/Ibase:.6f} pu ∠ {math.degrees(np.angle(If2)):.2f}°")
+print("\n================ COMPONENTES SIMÉTRICAS DA CORRENTE — fase A ================")
+for label, I in (("If0", If0), ("If1", If1), ("If2", If2)):
+    print_phase_a(label, I, Ibase, real_unit="A")
 
 # =====================================================
-# TENSÃO DE THÉVENIN (pré-falta fase A na relay_position)
+# TENSÃO DE THÉVENIN (pré-falta fase A)
 # =====================================================
-mag_vth    = tensoes_prefalta_reais[0][0]
-ang_vth    = tensoes_prefalta_reais[0][1]
-Vth        = complex(mag_vth * math.cos(math.radians(ang_vth)),
-                     mag_vth * math.sin(math.radians(ang_vth)))
-Vth_pu     = Vth / Vbase
+Vth    = V_prefault[0]           # tensão pré-falta fase A no relay
+Vth_pu = Vth / Vbase_ln
 
 # =====================================================
-# TENSÕES DE SEQUÊNCIA NO RELAY
+# TENSÕES DE SEQUÊNCIA NO RELAY (modelo)
 # =====================================================
 Vs1 = Vth  - If1 * Zth1
 Vs2 =      - If2 * Zth2
 Vs0 =      - If0 * Zth0
 
-Vs1_pu = Vs1 / Vbase
-Vs2_pu = Vs2 / Vbase
-Vs0_pu = Vs0 / Vbase
-
 print("\n================ TENSÕES DE SEQUÊNCIA NO RELAY (modelo) ================")
-print(f"Vs1: {Vs1_pu.real:+.6f} {Vs1_pu.imag:+.6f}j pu  |  |Vs1| = {abs(Vs1_pu):.6f} pu ∠ {math.degrees(np.angle(Vs1_pu)):.2f}°")
-print(f"Vs2: {Vs2_pu.real:+.6f} {Vs2_pu.imag:+.6f}j pu  |  |Vs2| = {abs(Vs2_pu):.6f} pu ∠ {math.degrees(np.angle(Vs2_pu)):.2f}°")
-print(f"Vs0: {Vs0_pu.real:+.6f} {Vs0_pu.imag:+.6f}j pu  |  |Vs0| = {abs(Vs0_pu):.6f} pu ∠ {math.degrees(np.angle(Vs0_pu)):.2f}°")
+for label, V in (("Vs1", Vs1), ("Vs2", Vs2), ("Vs0", Vs0)):
+    print_phase_a(label, V, Vbase_ln, real_unit="V")
 
 # =====================================================
-# V_monitor = Vs1 + Vs2 + Vs0
+# V_MONITOR = Vs1 + Vs2 + Vs0
 # =====================================================
 V_monitor    = Vs1 + Vs2 + Vs0
-V_monitor_pu = V_monitor / Vbase
+V_monitor_pu = V_monitor / Vbase_ln
 
-print("\n================ V_MONITOR (modelo de sequência) ================")
-print(f"V_monitor: {V_monitor_pu.real:+.6f} {V_monitor_pu.imag:+.6f}j pu")
-print(f"V_monitor: {abs(V_monitor_pu):.6f} pu ∠ {math.degrees(np.angle(V_monitor_pu)):.2f}°")
+V_relay_pu   = V_fault[0] / Vbase_ln
+erro_mag     = abs(abs(V_monitor_pu) - abs(V_relay_pu))
+erro_ang     = abs(np.degrees(np.angle(V_monitor_pu)) - np.degrees(np.angle(V_relay_pu)))
 
-# =====================================================
-# COMPARAÇÃO COM TENSÃO REAL DO OPENDSS (fase A relay)
-# =====================================================
-mag_real   = tensoes_falta_reais[0][0]
-ang_real   = tensoes_falta_reais[0][1]
-V_relay    = complex(mag_real * math.cos(math.radians(ang_real)),
-                     mag_real * math.sin(math.radians(ang_real)))
-V_relay_pu = V_relay / Vbase
-
-erro_mag = abs(abs(V_monitor_pu) - abs(V_relay_pu))
-erro_ang = abs(math.degrees(np.angle(V_monitor_pu)) - ang_real)
-
-print("\n================ COMPARAÇÃO V_MONITOR vs V_RELAY (OpenDSS) ================")
-print(f"V_relay  (OpenDSS): {V_relay_pu.real:+.6f} {V_relay_pu.imag:+.6f}j pu  |  {abs(V_relay_pu):.6f} pu ∠ {ang_real:.2f}°")
-print(f"V_monitor (modelo): {V_monitor_pu.real:+.6f} {V_monitor_pu.imag:+.6f}j pu  |  {abs(V_monitor_pu):.6f} pu ∠ {math.degrees(np.angle(V_monitor_pu)):.2f}°")
-print(f"\nErro magnitude: {erro_mag:.6f} pu  ({erro_mag*100:.4f}%)")
-print(f"Erro ângulo:    {erro_ang:.4f}°")
+print("\n================ V_MONITOR vs V_RELAY (OpenDSS) ================")
+print_phase_a("V_relay  OpenDSS", V_fault[0],  Vbase_ln, real_unit="V")
+print_phase_a("V_monitor modelo", V_monitor,   Vbase_ln, real_unit="V")
+print(f"\n  Erro magnitude: {erro_mag:.6f} pu  ({erro_mag*100:.4f}%)")
+print(f"  Erro ângulo:    {erro_ang:.4f}°")
 
 # =====================================================
 # RESTAURA CIRCUITO ORIGINAL
 # =====================================================
-dss.text(r"compile C:\Users\nilbe\Documents\DISCIPLINAS\TCC2026\Localizador\34Bus\34busModTotal953mi.dss")
-dss.solution.solve()
+compile_circuit()

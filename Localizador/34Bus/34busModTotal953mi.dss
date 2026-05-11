@@ -248,10 +248,11 @@ Set VoltageBases = "69,24.9,4.16, .48"
 CalcVoltageBases
 
 
+!New Fault.Falta_850_F1 bus1=850.1 phases=1 r=0.001
 
-New Fault.F1 bus=850.1 
 
-Set LoadMult=20
+Set LoadMult==7.2
 Solve
+!show voltages
 
-export currents
+!export currents
