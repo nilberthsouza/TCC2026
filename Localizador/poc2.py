@@ -6,7 +6,8 @@ dss = py_dss_interface.DSS()
 # =====================================================
 # CONFIGURAÇÕES
 # =====================================================
-DSS_FILE       = r"C:\Users\nilbe\Documents\DISCIPLINAS\TCC2026\Localizador\34Bus\34busModTotal953mi.dss"
+#DSS_FILE       = r"C:\Users\nilbe\Documents\DISCIPLINAS\TCC2026\Localizador\34Bus\34busModTotal953mi.dss"
+DSS_FILE       = r"C:\Users\nilbe\Documents\DISCIPLINAS\TCC2026\Localizador\34Bus\34busModTotal14mi.dss"
 RELAY_BUS      = "812"
 RELAY_LINE     = "Line.L5"       # linha monitorada (terminal 2 = lado do relay)
 FAULT_BUSES    = ["850", "854", "822", "834", "840", "848"]
@@ -101,18 +102,17 @@ def get_thevenin_seq_impedances(bus: str) -> tuple[complex, complex]:
 
 def get_line_series_impedance(element: str) -> complex:
     """
-    Extrai impedância série total fase A da linha a partir de Zprim:
-      Zserie = Zself(T1,A) - Zmutual(T2,A → T1,A)
+    Extrai a impedância série total de sequência positiva da linha (Ω).
+    Usa os parâmetros diretos via dss.lines:
+      ZL = (R1 + jX1) * length
+    onde R1 e X1 estão em Ω/unidade-de-comprimento e length na mesma unidade.
     """
-    dss.circuit.set_active_element(element)
-    zprim  = dss.cktelement.zprim_mag_ang
-    n_cond = dss.cktelement.num_conductors
-    n_rows = n_cond * dss.cktelement.num_terminals
-    mags   = np.array(zprim[0::2])
-    angs   = np.deg2rad(np.array(zprim[1::2]))
-    Zmat   = (mags * (np.cos(angs) + 1j * np.sin(angs))).reshape(n_rows, n_rows)
-    return Zmat[0, 0] - Zmat[n_cond, 0]
-
+    line_name = element.split(".")[-1]
+    dss.lines.name = line_name
+    r1     = dss.lines.r1       # Ω/unidade
+    x1     = dss.lines.x1       # Ω/unidade
+    length = dss.lines.length   # unidade de comprimento (consistente com r1/x1)
+    return complex(r1 * length, x1 * length)
 
 def takagi(Vs: complex, Is: complex, Is_pre: complex, ZL: complex) -> float | None:
     """
