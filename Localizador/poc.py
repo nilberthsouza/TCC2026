@@ -9,7 +9,7 @@ dss = py_dss_interface.DSS()
 # =====================================================
 DSS_FILE    = r"C:\Users\nilbe\Documents\DISCIPLINAS\TCC2026\Localizador\34Bus\34busModTotal14mi.dss"
 RELAY_BUS   = "812"
-RELAY_LINE  = "Line.L5"      # linha que o relay monitora (terminal 2 = barra relay)
+RELAY_LINE  = "Line.L5"      # linha que o relay monitora (terminal 1 = barra relay)
 FAULT_BUSES = ["850", "854", "822", "834", "840", "848"]
 Sbase_MVA   = 40.0
 Sbase       = Sbase_MVA * 1e6
@@ -48,10 +48,16 @@ def get_bus_voltages(bus: str, n_phases: int = 3) -> np.ndarray:
                     dtype=complex)
 
 
-def get_line_currents(element: str, terminal: int = 2, n_phases: int = 3) -> np.ndarray:
+# CORREÇÃO 1: default alterado de terminal=2 para terminal=1.
+# No OpenDSS, currents_mag_ang retorna [T1_A_mag, T1_A_ang, T1_B_mag, T1_B_ang, ...,
+#                                        T2_A_mag, T2_A_ang, ...].
+# Terminal 1 -> offset 0 (primeiros n_phases pares).
+# Terminal 2 -> offset n_phases*2 (segundos n_phases pares) — NUNCA usar aqui.
+def get_line_currents(element: str, terminal: int = 1, n_phases: int = 3) -> np.ndarray:
     """
     Array complexo (n_phases,) das correntes no terminal indicado.
-    terminal=1 -> offset 0; terminal=2 -> offset n_phases*2.
+    terminal=1 -> offset 0 (relay side, sentido fisico correto).
+    terminal=2 -> offset n_phases*2 (EVITAR: aparece defasado ~180 graus).
     """
     dss.circuit.set_active_element(element)
     curr   = dss.cktelement.currents_mag_ang
@@ -267,11 +273,17 @@ print(f"  Ibase              : {Ibase:.4f} A")
 print(f"  Zbase              : {Zbase:.6f} Ohm")
 
 # =====================================================
-# ETAPA 2 — CONDICOES PRE-FALTA (todas as 3 fases necessarias para Takagi)
+# ETAPA 2 — CONDICOES PRE-FALTA
 # =====================================================
-V_pre    = get_bus_voltages(RELAY_BUS)      # (3,) [V]
-Iabc_pre_raw = get_line_currents(RELAY_LINE)    # (3,) [A] — terminal 2, entra na barra
-Iabc_pre = -Iabc_pre_raw                       # negado: sentido relay -> rede
+V_pre    = get_bus_voltages(RELAY_BUS)
+
+# CORREÇÃO 2: removido argumento terminal=2 (era o default anterior).
+# get_line_currents agora usa terminal=1 por default — sem necessidade de argumento explícito.
+# CORREÇÃO 3: removida a negação "-Iabc_pre_raw".
+# Com terminal=1, a corrente já sai no sentido físico correto (relay -> rede),
+# pois o terminal 1 de RELAY_LINE está conectado à barra do relay (RELAY_BUS).
+# A negação anterior era um workaround para compensar a inversão de ~180° do terminal=2.
+Iabc_pre = get_line_currents(RELAY_LINE)    # (3,) [A] — terminal 1, sentido relay->rede
 
 section("CONDICOES PRE-FALTA  —  barra relay  (fase A)")
 pline("Tensao Va_pre",    V_pre[0],    Vln,   "V")
@@ -283,6 +295,9 @@ pline("Corrente Ia_pre",  Iabc_pre[0], Ibase, "A")
 compile_circuit(add_meter=True)
 dss.text(f"New Fault.F3F Bus1={RELAY_BUS} Phases=3 R=0.0001")
 dss.solution.solve()
+
+# CORREÇÃO 4: removido argumento implícito terminal=2.
+# get_line_currents usa terminal=1 por default após a correção da assinatura.
 I_3F = get_line_currents(RELAY_LINE)
 
 section("CURTO TRIFASICO (3F)  —  barra relay  (fase A)")
@@ -294,6 +309,8 @@ pline("Icc3F", I_3F[0], Ibase, "A")
 compile_circuit(add_meter=True)
 dss.text(f"New Fault.F1F Bus1={RELAY_BUS}.1.0 Phases=1 R=0.0001")
 dss.solution.solve()
+
+# CORREÇÃO 5: idem etapa 3 — terminal=1 por default.
 I_1F = get_line_currents(RELAY_LINE)
 
 section("CURTO MONOFASICO 1F-T  —  barra relay  (fase A)")
@@ -348,9 +365,14 @@ for fault_bus in FAULT_BUSES:
     dss.text(f"New Fault.F1F Bus1={fault_bus}.1.0 Phases=1 R=0.0001")
     dss.solution.solve()
 
-    V_fault      = get_bus_voltages(RELAY_BUS)
-    Iabc_fault_raw = get_line_currents(RELAY_LINE, n_phases=3)
-    Iabc_fault   = -Iabc_fault_raw          # sentido relay -> rede
+    V_fault        = get_bus_voltages(RELAY_BUS)
+
+    # CORREÇÃO 6: removido argumento implícito terminal=2 e removida negação.
+    # Antes: get_line_currents(RELAY_LINE, n_phases=3)  -> terminal=2 (default antigo)
+    #        Iabc_fault = -Iabc_fault_raw               -> negação compensatória
+    # Agora: get_line_currents(RELAY_LINE, n_phases=3)  -> terminal=1 (novo default)
+    #        sem negação, sentido físico já está correto.
+    Iabc_fault     = get_line_currents(RELAY_LINE, n_phases=3)   # terminal 1, relay->rede
 
     path, Z1L, Z0L, L = paths_cache[fault_bus]
 
@@ -383,7 +405,7 @@ print(f"  {'Barra':<8} {'d Takagi (mi)':>14}  {'Ref (mi)':>10}  {'Erro (mi)':>10
 print(f"  {'-' * 96}")
 for bus, d_mi, ref, Va in resultados:
     erro   = d_mi - ref
-    pct    = erro / ref * 100
+    pct    = erro / 14 * 100
     Va_mag = abs(Va)
     Va_pu  = Va_mag / Vln
     Va_ang = np.degrees(np.angle(Va))
