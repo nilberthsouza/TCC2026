@@ -3,7 +3,7 @@ import numpy as np
 
 dss = py_dss_interface.DSS()
 
-dss.text(r"compile C:\Users\nilbe\Documents\DISCIPLINAS\TCC2026\Localizador\34Bus\34busModTotal953mi.dss")
+dss.text(r"compile C:\Users\nilbe\Documents\DISCIPLINAS\TCC2026\Localizador\34Bus\34busModTotal14mi.dss")
 dss.solution.solve()
 
 # ===============================

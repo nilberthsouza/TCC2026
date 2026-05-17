@@ -1,5 +1,7 @@
+import re
 import py_dss_interface
 import numpy as np
+import networkx as nx
 from collections import defaultdict, deque
 
 dss = py_dss_interface.DSS()
@@ -10,8 +12,9 @@ dss = py_dss_interface.DSS()
 DSS_FILE    = r"C:\Users\nilbe\Documents\DISCIPLINAS\TCC2026\Localizador\34Bus\34busModTotal14mi.dss"
 RELAY_BUS   = "812"
 RELAY_LINE  = "Line.L5"      # linha que o relay monitora (terminal 1 = barra relay)
-FAULT_BUSES = ["850", "854", "822", "834", "840", "848"]
+FAULT_BUSES = [ "850","854", "822", "834", "840", "848"]
 REF_LINECODE = "301"         # linecode de referência para impedâncias por milha
+L_ALIMENTADOR_MI: float      # calculado automaticamente após carregar o circuito
 Sbase_MVA   = 40.0
 Sbase       = Sbase_MVA * 1e6
 
@@ -112,6 +115,77 @@ def get_linecode_params(linecode_name: str) -> tuple[float, float, float, float]
 
 
 # =====================================================
+# FUNÇÕES UTILITÁRIAS — CÁLCULO AUTOMÁTICO DE REF E L_ALIMENTADOR
+# =====================================================
+
+def build_networkx_graph() -> nx.Graph:
+    """
+    Constrói grafo NetworkX lendo o arquivo DSS_FILE diretamente.
+    Ignora linhas comentadas (!). Retorna grafo com edge weight = comprimento [mi].
+    """
+    def clean_bus(b: str) -> str:
+        return b.split(".")[0].lower().rstrip("r")
+
+    G = nx.Graph()
+    with open(DSS_FILE, encoding="utf-8", errors="ignore") as fh:
+        for raw in fh:
+            line = raw.strip()
+            if not line or line.startswith("!"):
+                continue
+            low = line.lower()
+            if not low.startswith("new line."):
+                continue
+            bus1 = bus2 = ""
+            length = 0.0
+            for token in line.split():
+                tl = token.lower()
+                if tl.startswith("bus1="):
+                    bus1 = clean_bus(token.split("=", 1)[1])
+                elif tl.startswith("bus2="):
+                    bus2 = clean_bus(token.split("=", 1)[1])
+                elif tl.startswith("length="):
+                    try:
+                        length = float(token.split("=", 1)[1])
+                    except ValueError:
+                        pass
+            if bus1 and bus2:
+                G.add_edge(bus1, bus2, weight=length)
+    return G
+
+
+def calc_ref_distances(G: nx.Graph, relay_bus: str,
+                       fault_buses: list[str]) -> dict[str, float]:
+    """
+    Calcula distâncias (shortest path por peso) de relay_bus até cada
+    barra em fault_buses. Retorna dict {barra: distancia_mi}.
+    """
+    origin = relay_bus.lower().rstrip("r")
+    result = {}
+    for fb in fault_buses:
+        dest = fb.lower().rstrip("r")
+        try:
+            d = nx.shortest_path_length(G, source=origin, target=dest, weight="weight")
+            result[fb] = round(d, 4)
+        except (nx.NetworkXNoPath, nx.NodeNotFound):
+            result[fb] = float("nan")
+    return result
+
+
+def calc_feeder_length(relay_bus: str, G: nx.Graph) -> float:
+    """
+    Comprimento do alimentador = distância do relay_bus até a barra
+    mais distante no subgrafo downstream (BFS a partir de relay_bus).
+    Usa shortest_path_length ponderado para todas as barras alcançáveis.
+    """
+    origin = relay_bus.lower().rstrip("r")
+    try:
+        lengths = nx.single_source_dijkstra_path_length(G, origin, weight="weight")
+        return round(max(lengths.values()), 4)
+    except Exception:
+        return 0.0
+
+
+# =====================================================
 # FUNCOES UTILITARIAS — TOPOLOGIA
 # =====================================================
 
@@ -170,22 +244,23 @@ def path_sequence_impedances(path: list[tuple],
                              r1_ref: float, x1_ref: float,
                              r0_ref: float, x0_ref: float) -> tuple[complex, complex, float]:
     """
-    Calcula Z1 e Z0 totais do caminho usando impedâncias por milha do
-    linecode de referência (REF_LINECODE) em vez dos parâmetros reais
-    de cada segmento. O comprimento real de cada segmento é preservado.
+    Calcula Z1 e Z0 usando impedâncias por milha do linecode de referência
+    (REF_LINECODE) multiplicadas pelo comprimento TOTAL do alimentador
+    (L_ALIMENTADOR_MI), não pelo comprimento do caminho até a falta.
 
-    Isso é consistente com o algoritmo de Takagi: o localizador não
-    conhece a priori onde ocorreu a falta, portanto usa um único modelo
-    homogêneo de linha para todo o alimentador.
+    Isso é consistente com o algoritmo de Takagi: o relay não sabe onde
+    ocorreu a falta, portanto Z1L e Z0L representam o alimentador inteiro.
+    O resultado d_pu = d_mi / L_ALIMENTADOR_MI indica a fração percorrida.
 
-    Retorna (Z1_total [Ohm], Z0_total [Ohm], L_total [mi]).
+    O comprimento real do caminho (L_path) é retornado apenas para
+    referência/impressão — não entra no cálculo de impedância.
+
+    Retorna (Z1_total [Ohm], Z0_total [Ohm], L_path [mi]).
     """
-    Z1_ref   = complex(r1_ref, x1_ref)   # Ohm/mi — fixo, do linecode de referência
-    Z0_ref   = complex(r0_ref, x0_ref)   # Ohm/mi — fixo, do linecode de referência
-    L_total  = sum(seg[3] for seg in path)
-    Z1_total = Z1_ref * L_total
-    Z0_total = Z0_ref * L_total
-    return Z1_total, Z0_total, L_total
+    Z1_total = complex(r1_ref, x1_ref)        # Ohm/mi — por milha, sem multiplicar
+    Z0_total = complex(r0_ref, x0_ref)        # Ohm/mi — por milha, sem multiplicar
+    L_path   = sum(seg[3] for seg in path)    # comprimento real até a falta (referência)
+    return Z1_total, Z0_total, L_path
 
 
 # =====================================================
@@ -206,7 +281,7 @@ def takagi_3ph(Va: complex, Ia: complex, Ia_pre: complex,
     den     = np.imag(Z1L * Ia * dIa_c)
     if np.isclose(den, 0.0):
         return None
-    return (num / den) * L_mi
+    return num / den          # resultado direto em milhas (z1 em Ohm/mi)
 
 
 def takagi_1ph(Va: complex, Iabc: np.ndarray, Iabc_pre: np.ndarray,
@@ -236,7 +311,7 @@ def takagi_1ph(Va: complex, Iabc: np.ndarray, Iabc_pre: np.ndarray,
     den = np.imag(Z1L * Icomp * dIcomp_c)
     if np.isclose(den, 0.0):
         return None
-    return (num / den) * L_mi
+    return num / den          # resultado direto em milhas (z1 em Ohm/mi)
 
 
 # =====================================================
@@ -262,6 +337,22 @@ def fmt(val: complex, base: float, unit: str) -> str:
 def pline(label: str, val: complex, base: float, unit: str) -> None:
     print(f"  {label:<20} {fmt(val, base, unit)}")
 
+
+# =====================================================
+# ETAPA 0 — CÁLCULO AUTOMÁTICO DE REF E L_ALIMENTADOR_MI
+# =====================================================
+_G               = build_networkx_graph()
+REF              = calc_ref_distances(_G, RELAY_BUS, FAULT_BUSES)
+L_ALIMENTADOR_MI = calc_feeder_length(RELAY_BUS, _G)
+
+section("ETAPA 0 — DISTÂNCIAS DE REFERÊNCIA E COMPRIMENTO DO ALIMENTADOR")
+print(f"  Relay bus          : {RELAY_BUS}")
+print(f"  L_ALIMENTADOR_MI   : {L_ALIMENTADOR_MI:.4f} mi  (barra mais distante alcançável)")
+print(f"")
+print(f"  {'Barra':<8} {'Distância (mi)':>15}")
+print(f"  {'-' * 26}")
+for fb, d in REF.items():
+    print(f"  {fb:<8} {d:>15.4f}")
 
 # =====================================================
 # ETAPA 1 — BASES DO SISTEMA
@@ -430,9 +521,11 @@ compile_circuit(add_meter=True)
 graph = build_network_graph()
 
 section("GRAFO DA REDE  —  caminhos relay -> barra de falta")
-print(f"  Linecode de referência para Z: {REF_LINECODE}  "
+print(f"  Linecode de referência: {REF_LINECODE}  "
       f"(|Z1|={abs(Z1_ref_per_mi):.4f} Ohm/mi, |Z0|={abs(Z0_ref_per_mi):.4f} Ohm/mi)")
-print(f"  {'Barra':<8} {'L caminho (mi)':>15}  {'|Z1L| (Ohm)':>12}  {'|Z0L| (Ohm)':>12}  Segmentos")
+print(f"  Z por milha (fixo)    : |Z1|={abs(Z1_ref_per_mi):.6f} Ohm/mi, |Z0|={abs(Z0_ref_per_mi):.6f} Ohm/mi")
+print(f"  Takagi retorna d [mi] diretamente: d = Im(Va*dI*) / Im(z1_mi * I * dI*)")
+print(f"  {'Barra':<8} {'L caminho (mi)':>15}  {'|Z1L| (Ohm/mi)':>15}  {'|Z0L| (Ohm/mi)':>15}  Segmentos")
 print(f"  {'-' * W}")
 
 paths_cache: dict[str, tuple] = {}
@@ -450,8 +543,7 @@ section("LOCALIZADOR DE TAKAGI MODIFICADO  —  falta 1F-T fase A")
 print(f"  {'Barra':<8} {'d (mi)':>10}  {'Ref (mi)':>10}  {'Erro (mi)':>10}  {'Erro (%)':>10}")
 print(f"  {'-' * 56}")
 
-REF = {"850": 0.620, "854": 2.180, "822": 3.000,
-       "834": 4.050, "840": 6.750, "848": 7.470}
+REF: dict[str, float]         # calculado automaticamente via NetworkX
 
 resultados: list[tuple] = []
 
@@ -471,8 +563,47 @@ for fault_bus in FAULT_BUSES:
         Iabc_pre = Iabc_pre,
         Z1L      = Z1L,
         Z0L      = Z0L,
-        L_mi     = L,
+        L_mi     = L_ALIMENTADOR_MI,   # alimentador completo — Takagi não conhece a falta
     )
+
+    # ── DEBUG: imprime intermediários apenas para a primeira barra de falta ──
+    if fault_bus == FAULT_BUSES[0]:
+        k0       = (Z0L - Z1L) / (3.0 * Z1L)
+        I3I0_f   = Iabc_fault[0] + Iabc_fault[1] + Iabc_fault[2]
+        Icomp_f  = Iabc_fault[0] + k0 * I3I0_f
+        I3I0_p   = Iabc_pre[0] + Iabc_pre[1] + Iabc_pre[2]
+        Icomp_p  = Iabc_pre[0] + k0 * I3I0_p
+        dIcomp   = Icomp_f - Icomp_p
+        Va_f     = V_fault[0]
+        num      = np.imag(Va_f * np.conj(dIcomp))
+        den      = np.imag(Z1L * Icomp_f * np.conj(dIcomp))
+        d_pu     = num / den if not np.isclose(den, 0.0) else float("nan")
+
+        section(f"DEBUG — barra {fault_bus}  (ref={REF.get(fault_bus,'?')} mi)")
+        print(f"  Z1L          : {abs(Z1L):.6f} Ohm  angle {np.degrees(np.angle(Z1L)):>+.3f} deg")
+        print(f"  Z0L          : {abs(Z0L):.6f} Ohm  angle {np.degrees(np.angle(Z0L)):>+.3f} deg")
+        print(f"  k0           : {k0.real:>+.6f}{k0.imag:>+.6f}j")
+        print(f"")
+        print(f"  Va (falta)   : {abs(Va_f):>12.4f} V  angle {np.degrees(np.angle(Va_f)):>+.3f} deg")
+        print(f"  Va (pre)     : {abs(V_pre[0]):>12.4f} V  angle {np.degrees(np.angle(V_pre[0])):>+.3f} deg")
+        print(f"")
+        for ph, lbl in enumerate(["A","B","C"]):
+            print(f"  I_fault fase {lbl}: {abs(Iabc_fault[ph]):>10.4f} A  angle {np.degrees(np.angle(Iabc_fault[ph])):>+.3f} deg")
+        print(f"")
+        for ph, lbl in enumerate(["A","B","C"]):
+            print(f"  I_pre   fase {lbl}: {abs(Iabc_pre[ph]):>10.4f} A  angle {np.degrees(np.angle(Iabc_pre[ph])):>+.3f} deg")
+        print(f"")
+        print(f"  I3I0 (falta) : {abs(I3I0_f):>10.4f} A  angle {np.degrees(np.angle(I3I0_f)):>+.3f} deg")
+        print(f"  I3I0 (pre)   : {abs(I3I0_p):>10.4f} A  angle {np.degrees(np.angle(I3I0_p)):>+.3f} deg")
+        print(f"  Icomp (falta): {abs(Icomp_f):>10.4f} A  angle {np.degrees(np.angle(Icomp_f)):>+.3f} deg")
+        print(f"  Icomp (pre)  : {abs(Icomp_p):>10.4f} A  angle {np.degrees(np.angle(Icomp_p)):>+.3f} deg")
+        print(f"  dIcomp       : {abs(dIcomp):>10.4f} A  angle {np.degrees(np.angle(dIcomp)):>+.3f} deg")
+        print(f"")
+        print(f"  numerador    : Im(Va * dIcomp*)          = {num:>+.6f}  [V*A]")
+        print(f"  denominador  : Im(z1_mi * Icomp * dIcomp*) = {den:>+.6f}  [Ohm/mi * A^2]")
+        print(f"  d_mi         : num/den = {d_pu:>+.6f} mi  (esperado: {REF.get(fault_bus,'?')} mi)")
+        print(f"")
+    # ── fim debug ────────────────────────────────────────────────────────────
 
     Va_fault = V_fault[0]
     ref      = REF.get(fault_bus, float("nan"))

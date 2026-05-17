@@ -48,11 +48,6 @@ def get_bus_voltages(bus: str, n_phases: int = 3) -> np.ndarray:
                     dtype=complex)
 
 
-# CORREÇÃO 1: default alterado de terminal=2 para terminal=1.
-# No OpenDSS, currents_mag_ang retorna [T1_A_mag, T1_A_ang, T1_B_mag, T1_B_ang, ...,
-#                                        T2_A_mag, T2_A_ang, ...].
-# Terminal 1 -> offset 0 (primeiros n_phases pares).
-# Terminal 2 -> offset n_phases*2 (segundos n_phases pares) — NUNCA usar aqui.
 def get_line_currents(element: str, terminal: int = 1, n_phases: int = 3) -> np.ndarray:
     """
     Array complexo (n_phases,) das correntes no terminal indicado.
@@ -103,13 +98,11 @@ def get_thevenin_seq_impedances(bus: str) -> tuple[complex, complex]:
 # =====================================================
 
 
-# fiz isso pra tratar problema com a distancia do alimentador, lembrar de verificar se ainda é necessario
 def _norm_bus(bus: str) -> str:
     """Normaliza nome de barra: minusculo e sem sufixo 'r' (ex: 814r -> 814)."""
     return bus.split(".")[0].lower().rstrip("r")
 
 
-# Não preciso mais disso, retirar
 def build_network_graph() -> dict[str, list[tuple]]:
     """
     Constroi grafo de adjacencia da rede lendo todos os elementos Line.
@@ -136,7 +129,6 @@ def build_network_graph() -> dict[str, list[tuple]]:
     return graph
 
 
-# não sei se vai quebrar com rede malhada, tomar cuidado aqui
 def find_shortest_path(graph: dict, start: str, end: str) -> list[tuple]:
     """
     BFS: caminho de menor numero de saltos entre start e end.
@@ -355,6 +347,7 @@ section("LOCALIZADOR DE TAKAGI MODIFICADO  —  falta 1F-T fase A")
 print(f"  {'Barra':<8} {'d (mi)':>10}  {'Ref (mi)':>10}  {'Erro (mi)':>10}  {'Erro (%)':>10}")
 print(f"  {'-' * 56}")
 
+# GABARITO
 REF = {"850": 0.620, "854": 2.180, "822": 3.000,
        "834": 4.050, "840": 6.750, "848": 7.470}
 
