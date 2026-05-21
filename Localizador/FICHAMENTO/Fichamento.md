@@ -318,3 +318,111 @@
 
 * Relaciona-se com estudos de localização de faltas baseados em matrizes de impedância e métodos de estimativa de afundamento de tensão.
 * Complementa a literatura que busca integrar o monitoramento de Qualidade de Energia com funções de proteção e diagnóstico de redes inteligentes.
+
+## Referencia 6
+
+**Referência:** A. Bach, T. -D. Le and M. Petit, "A zero-sequence impedance-based fault location method for MV distribution feeders with sparse measurements," *16th International Conference on Developments in Power System Protection (DPSP 2022)*, Hybrid Conference, Newcastle, UK, 2022, pp. 7-12. doi: 10.1049/icp.2022.0903.
+
+**Objetivo:** Desenvolver um método de localização de faltas para alimentadores radiais de média tensão (MT) utilizando componentes de sequência zero e um número limitado de nós de medição, visando uma solução de baixo custo e alta precisão.
+
+**Metodologia:**
+
+* **Sequência Zero:** O método foca em componentes de sequência zero (tensão e corrente), o que o torna aplicável a todos os tipos de faltas à terra.
+* **Medições Esparsas:** Utiliza medições de tensão em subestações secundárias selecionadas (nós de medição) e medições na subestação principal.
+* **Abordagem de Admitância:** O algoritmo calcula a admitância de sequência zero vista de cada nó de medição para identificar a seção faltosa através da comparação de valores teóricos e medidos.
+* **Sincronização:** O método é testado tanto com medições não sincronizadas quanto sincronizadas (via PMUs), avaliando o ganho de precisão com o uso de fasores sincronizados.
+* **Simulação:** Validado em um alimentador de distribuição real de 20 kV (modelo francês) reconstruído no software EMTP.
+
+**Principais Resultados:**
+
+* **Precisão com PMUs:** Com medições sincronizadas, o método alcançou erro zero na identificação da seção faltosa em todos os cenários testados, mesmo nos alimentadores mais complexos.
+* **Medições Não Sincronizadas:** Apresentou resultados promissores, embora a ausência de sincronização possa introduzir ambiguidades em redes muito ramificadas.
+* **Custo-Benefício:** Demonstrou ser eficaz utilizando apenas medições de tensão nas subestações secundárias, reduzindo a necessidade de sensores de corrente caros em toda a rede.
+
+**Conclusões:**
+
+* O uso da impedância (ou admitância) de sequência zero é uma estratégia robusta para localizar faltas à terra em redes radiais.
+* A integração de PMUs aumenta significativamente a confiabilidade do diagnóstico, eliminando incertezas causadas pela defasagem angular entre medições remotas.
+* O método é escalável e adaptável a diferentes arquiteturas de redes de média tensão.
+
+**Críticas e Reflexões:**
+
+* O estudo destaca-se pela viabilidade econômica, mas a eficácia do método depende diretamente da densidade e do posicionamento estratégico dos nós de medição ("sparse measurements").
+* Faltas com resistência de transição muito elevada podem desafiar a sensibilidade dos cálculos de sequência zero, ponto que merece exploração em trabalhos futuros.
+
+**Referências e Relações:**
+
+* Relaciona-se com métodos clássicos de localização baseados em impedância, mas inova ao focar na sequência zero para reduzir a dependência de dados de carga e parâmetros de sequência positiva.
+* Baseia-se em conceitos de monitoramento de redes inteligentes (Smart Grids) e uso de PMUs em sistemas de distribuição.
+
+## Referencia 7
+
+
+**Referência:** Wang, Y., Li, Z., Chen, S. et al. "Location Method of Single-Phase to Ground Fault in Distribution Network Based on Time-Frequency Matrix Analysis of Traveling Wave". *J. Electr. Eng. Technol.* 19, 5221–5233 (2024). [https://doi.org/10.1007/s42835-024-02037-w](https://www.google.com/search?q=https://doi.org/10.1007/s42835-024-02037-w)
+
+**Objetivo:** Propor um método de localização de faltas monofásicas à terra em redes de distribuição baseado na análise de matrizes tempo-frequência de ondas viajantes, visando identificar com precisão o segmento faltoso (tronco ou ramais) e a distância exata.
+
+**Metodologia:**
+
+* **Desacoplamento de Sinais:** Utiliza a transformada de Clarke para obter a componente de modo aéreo das ondas viajantes (TW), eliminando a instabilidade do modo terra.
+* **Matriz Tempo-Frequência:** Aplica a Transformada Contínua de Wavelet (CWT) para construir matrizes que representam as características do sinal.
+* **Biblioteca de Comparação:** Cria uma biblioteca de matrizes padrão baseada em faltas pré-configuradas em diferentes pontos da rede (tronco, ramos primários e secundários).
+* **Identificação por Similaridade:** Compara a matriz capturada no momento da falta com a biblioteca usando o coeficiente de correlação de Pearson para determinar o trecho faltoso.
+* **Cálculo de Distância:** Utiliza o espectro de evolução de energia para detectar o tempo de chegada da frente de onda com precisão, calculando a distância final.
+
+**Principais Resultados:**
+
+* **Alta Precisão de Localização:** O erro máximo registrado nas simulações foi de apenas **15,4 metros** em um sistema complexo.
+* **Robustez:** O método mostrou-se eficaz mesmo sob variações de resistência de falta (até 500 $\Omega$) e diferentes ângulos de incidência da falta.
+* **Superação de Reflexões:** A análise matricial permitiu distinguir ondas refletidas de ramais complexos, um dos maiores desafios em métodos de ondas viajantes convencionais.
+
+**Conclusões:**
+
+* A combinação de análise de similaridade matricial com detecção de energia por frequência resolve o problema da identificação de ramais em redes radiais complexas.
+* O método é superior aos algoritmos tradicionais de ondas viajantes por não depender apenas da detecção de picos de tempo, que podem ser mascarados por ruído ou reflexões múltiplas.
+
+**Críticas e Reflexões:**
+
+* O método exige uma infraestrutura de medição de alta frequência (sensores de ondas viajantes) em todos os terminais do alimentador, o que pode representar um custo de implementação elevado.
+* A necessidade de uma "biblioteca de comparação" implica que mudanças significativas na topologia da rede exigiriam a atualização dos modelos de referência.
+
+**Referências e Relações:**
+
+* Relaciona-se com técnicas de processamento de sinais (Wavelets) e métodos de ondas viajantes multi-terminais.
+* Complementa a literatura de *Smart Grids* focada em diagnósticos rápidos para redução do tempo de interrupção (SAIDI).
+
+## Referencia 8
+
+
+**Referência:** Z. Zhang, Z. Zhao and H. Yu, "Research on Fault Location Algorithm for Line Protection," *2022 China International Conference on Electricity Distribution (CICED)*, Changsha, China, 2022, pp. 1317-1321. doi: 10.1109/CICED56215.2022.9928979.
+
+**Objetivo:** Introduzir, analisar e comparar o desempenho prático de três diferentes categorias de algoritmos de localização de faltas baseados em frequência industrial — por impedância de terminal único, de duplo terminal e de triplo terminal (linhas em "T") — focando na superação do impacto da resistência de transição.
+
+**Metodologia:**
+
+* **Modelagem e Análise Matemática:** Apresentação detalhada das equações matemáticas que regem cada um dos três métodos de localização.
+* **Algoritmo de Terminal Único:** Baseado na estimativa clássica de impedância de loop, utilizando tensão e corrente locais, aplicando técnicas para compensar a corrente de carga e a resistência de aterramento.
+* **Algoritmo de Duplo Terminal:** Desenvolvido para atuar de forma integrada à proteção diferencial de corrente longitudinal, compartilhando fasores de tensão e corrente de ambas as extremidades.
+* **Algoritmo de Triplo Terminal:** Expansão matemática projetada especificamente para linhas de transmissão com derivações em formato de "T", utilizando dados síncronos ou assíncronos dos três nós.
+* **Análise de Aplicação:** Avaliação comparativa de robustez diante de fatores operacionais adversos, como resistência de transição, assincronismo de dados e variações de carga.
+
+**Principais Resultados:**
+
+* **Limitação do Terminal Único:** Embora seja de fácil implementação por requerer canais de comunicação simples, o erro aumenta significativamente em faltas com alta resistência de transição devido ao efeito de alimentação remota (*infeed*).
+* **Superioridade do Duplo Terminal:** Reduz drasticamente o impacto da resistência de transição, oferecendo alta precisão por monitorar as contribuições de corrente de curto-circuito de ambos os lados da linha.
+* **Eficácia em Linhas Especiais:** O método de triplo terminal demonstrou ser o único capaz de resolver as ambiguidades e calcular de forma exata a distância da falta em arranjos ramificados do tipo conexão em "T".
+
+**Conclusões:**
+
+* A escolha do algoritmo ideal deve balancear a complexidade da infraestrutura de comunicação disponível com os requisitos de precisão do sistema.
+* Os métodos de múltiplos terminais (duplo e triplo) superam as deficiências fundamentais dos métodos de impedância de terminal único, sendo altamente recomendados para sistemas modernos de proteção que dispõem de redes de comunicação robustas.
+
+**Críticas e Reflexões:**
+
+* O artigo foca na consolidação teórica e nos critérios práticos de aplicação de engenharia para relés de proteção industriais, mas carece de curvas detalhadas de sensibilidade numérica ou tabelas estatísticas de simulação para quantificar numericamente os limites exatos de tolerância de erro.
+* A viabilidade dos métodos multi-terminais propostos permanece estritamente atrelada à confiabilidade dos canais de sincronização temporal ou à eficácia dos algoritmos de alinhamento de dados pós-falta.
+
+**Referências e Relações:**
+
+* Relaciona-se diretamente com os conceitos clássicos de proteção diferencial de linhas e algoritmos fundamentais de localização baseados em componentes fundamentais de frequência industrial.
+* Complementa estudos focados em algoritmos adaptativos para linhas de transmissão e redes de distribuição complexas interconectadas.

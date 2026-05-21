@@ -27,10 +27,14 @@ from display_utils   import (section, pline, fmt_z, W,
 # CONFIGURAÇÕES
 # ─────────────────────────────────────────────────────────────────────────────
 DSS_FILE     = r"C:\Users\nilbe\Documents\DISCIPLINAS\TCC2026\Localizador\34Bus\34busModTotal14mi.dss"
-RELAY_BUS    = "812"
-RELAY_LINE   = "Line.L5"
-FAULT_BUSES  = ["850","854", "822", "834", "840", "848"]
-REF_LINECODE = "301"
+
+#Alimentador Real
+DSS_FILE     = r"C:\Users\nilbe\Documents\DISCIPLINAS\TCC2026\Localizador\JMLT310\Master_DU01_2023124950_JMLT310_--MBS-1P-T--.dss"
+
+RELAY_BUS    = "NODE#1361434537"
+RELAY_LINE   = "Line.SMT_1094029690"
+FAULT_BUSES  = ["NODE#1981522703","NODE#1981522703", "NODE#442497657", "NODE#424247123"]
+REF_LINECODE = "77_3"
 SBASE_MVA    = 40.0
 SBASE        = SBASE_MVA * 1e6
 

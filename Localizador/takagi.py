@@ -63,7 +63,6 @@ def takagi_1ph(Va: complex, Iabc: np.ndarray, Iabc_pre: np.ndarray,
     Iabc_pre : Array (3,) — correntes trifásicas pré-falta [A].
     Z1L      : Impedância de seq. positiva por milha [Ohm/mi].
     Z0L      : Impedância de seq. zero por milha [Ohm/mi].
-    L_mi     : (não usado no cálculo — mantido por simetria de assinatura).
 
     Retorna
     -------
