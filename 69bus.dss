@@ -1,16 +1,19 @@
 ! ============================================================
-!  OpenDSS - Modelo Teste (baseado em IEEE 14 Barras - 70 barras)
+!  OpenDSS - Modelo Teste (70 barras)
 !  Convertido do formato MATLAB (caso.m)
-!  Base: 100 MVA / 100 kV (sistema em p.u. -> Z_base = 100 ohms)
+!  Base: 100 MVA / 100 kV  ->  Z_base = 100 ohm
 !
-!  CORRECAO: Vsource conectada diretamente na barra 1 da rede.
-!  O OpenDSS cria "SOURCEBUS" internamente; o parametro bus1=1
-!  faz com que a fonte alimente a barra 1 do sistema.
+!  Estrutura do arquivo:
+!    1. WireData  - dados fisicos dos condutores
+!    2. LineCode  - tipos de cabo (8 grupos por X/R e nivel de tensao)
+!    3. LineGeometry - geometria dos postes/torres por tipo
+!    4. Lines     - ramos com LineCode + LineGeometry + Length equivalente
+!    5. Loads     - cargas nas barras
 ! ============================================================
 
 Clear
 
-! --- Fonte de tensao (barra slack = barra 1, tipo 2 no MATLAB) ---
+! --- Fonte slack na barra 1 ---
 New Circuit.ModeleTeste
 ~ bus1=1
 ~ basekv=100
@@ -20,100 +23,284 @@ New Circuit.ModeleTeste
 ~ phases=3
 
 ! ============================================================
-!  LINHAS
-!  r e x originais em p.u. (base 100 MVA / 100 kV, Z_base=100 ohm)
-!  Multiplicados por 100 para obter ohm, com Length=1 km
-!  C1=0 pois bshl=0 em todos os ramos do arquivo original
+!  WIREDATA
+!  Dados fisicos dos condutores (GMR, raio, ampacidade)
+!  Parametros tipicos - ajuste conforme condutor real
+!  normcode: unidades SI (raio/GMR em metros, Rac em ohm/km)
 ! ============================================================
 
-! --- Tronco principal: barras 1 a 28 ---
-New Line.L1_2    Bus1=1   Bus2=2   R1=0.0312   X1=0.0749   C1=0  Length=1
-New Line.L2_3    Bus1=2   Bus2=3   R1=0.0312   X1=0.0749   C1=0  Length=1
-New Line.L3_4    Bus1=3   Bus2=4   R1=0.0006   X1=0.0006   C1=0  Length=1
-New Line.L4_5    Bus1=4   Bus2=5   R1=0.0936   X1=0.2246   C1=0  Length=1
-New Line.L5_6    Bus1=5   Bus2=6   R1=1.5661   X1=1.8343   C1=0  Length=1
-New Line.L6_7    Bus1=6   Bus2=7   R1=22.8357  X1=11.6300  C1=0  Length=1
-New Line.L7_8    Bus1=7   Bus2=8   R1=23.7778  X1=12.1104  C1=0  Length=1
-New Line.L8_9    Bus1=8   Bus2=9   R1=5.7526   X1=2.9324   C1=0  Length=1
-New Line.L9_10   Bus1=9   Bus2=10  R1=3.0760   X1=1.5661   C1=0  Length=1
-New Line.L10_11  Bus1=10  Bus2=11  R1=51.0995  X1=16.8897  C1=0  Length=1
-New Line.L11_12  Bus1=11  Bus2=12  R1=11.6799  X1=3.8621   C1=0  Length=1
-New Line.L12_13  Bus1=12  Bus2=13  R1=44.3860  X1=14.6685  C1=0  Length=1
-New Line.L13_14  Bus1=13  Bus2=14  R1=64.2643  X1=21.2135  C1=0  Length=1
-New Line.L14_15  Bus1=14  Bus2=15  R1=65.1378  X1=21.5254  C1=0  Length=1
-New Line.L15_16  Bus1=15  Bus2=16  R1=66.0113  X1=21.8124  C1=0  Length=1
-New Line.L16_17  Bus1=16  Bus2=17  R1=12.2664  X1=4.0555   C1=0  Length=1
-New Line.L17_18  Bus1=17  Bus2=18  R1=23.3598  X1=7.7242   C1=0  Length=1
-New Line.L18_19  Bus1=18  Bus2=19  R1=0.2932   X1=0.0998   C1=0  Length=1
-New Line.L19_20  Bus1=19  Bus2=20  R1=20.4398  X1=6.7571   C1=0  Length=1
-New Line.L20_21  Bus1=20  Bus2=21  R1=13.1399  X1=4.3425   C1=0  Length=1
-New Line.L21_22  Bus1=21  Bus2=22  R1=21.3133  X1=7.0441   C1=0  Length=1
-New Line.L22_23  Bus1=22  Bus2=23  R1=0.8735   X1=0.2870   C1=0  Length=1
-New Line.L23_24  Bus1=23  Bus2=24  R1=9.9267   X1=3.2818   C1=0  Length=1
-New Line.L24_25  Bus1=24  Bus2=25  R1=21.6065  X1=7.1439   C1=0  Length=1
-New Line.L25_26  Bus1=25  Bus2=26  R1=46.7195  X1=15.4422  C1=0  Length=1
-New Line.L26_27  Bus1=26  Bus2=27  R1=19.2731  X1=6.3703   C1=0  Length=1
-New Line.L27_28  Bus1=27  Bus2=28  R1=10.8064  X1=3.5689   C1=0  Length=1
+! Cabo de Alumínio com Alma de Aço (CAA) - 636 kcmil GROSBEAK - transmissão AT
+New WireData.CAA_GROSBEAK
+~ Rac=0.0986      ! ohm/km a 50 Hz, 75 C
+~ GMRac=0.00950   ! m
+~ Radius=0.01415  ! m
+~ normamps=600    ! A
+~ emergamps=720   ! A
 
-! --- Ramal da barra 3: barras 29 a 36 ---
-New Line.L3_29   Bus1=3   Bus2=29  R1=0.2745   X1=0.6738   C1=0  Length=1
-New Line.L29_30  Bus1=29  Bus2=30  R1=3.9931   X1=9.7644   C1=0  Length=1
-New Line.L30_31  Bus1=30  Bus2=31  R1=24.8197  X1=8.2046   C1=0  Length=1
-New Line.L31_32  Bus1=31  Bus2=32  R1=4.3800   X1=1.4475   C1=0  Length=1
-New Line.L32_33  Bus1=32  Bus2=33  R1=21.8998  X1=7.2375   C1=0  Length=1
-New Line.L33_34  Bus1=33  Bus2=34  R1=52.3473  X1=17.5697  C1=0  Length=1
-New Line.L34_35  Bus1=34  Bus2=35  R1=106.5664 X1=35.2268  C1=0  Length=1
-New Line.L35_36  Bus1=35  Bus2=36  R1=91.9666  X1=30.4039  C1=0  Length=1
+! CAA - 336 kcmil LINNET - ramal AT
+New WireData.CAA_LINNET
+~ Rac=0.1873
+~ GMRac=0.00693
+~ Radius=0.01029
+~ normamps=400
+~ emergamps=480
 
-! --- Ramal da barra 4: barras 37 a 47 ---
-New Line.L4_37   Bus1=4   Bus2=37  R1=0.2745   X1=0.6738   C1=0  Length=1
-New Line.L37_38  Bus1=37  Bus2=38  R1=3.9931   X1=9.7644   C1=0  Length=1
-New Line.L38_39  Bus1=38  Bus2=39  R1=6.5699   X1=7.6743   C1=0  Length=1
-New Line.L39_40  Bus1=39  Bus2=40  R1=1.8967   X1=2.2149   C1=0  Length=1
-New Line.L40_41  Bus1=40  Bus2=41  R1=0.1123   X1=0.1310   C1=0  Length=1
-New Line.L41_42  Bus1=41  Bus2=42  R1=45.4405  X1=53.0898  C1=0  Length=1
-New Line.L42_43  Bus1=42  Bus2=43  R1=19.3417  X1=22.6048  C1=0  Length=1
-New Line.L43_44  Bus1=43  Bus2=44  R1=2.5581   X1=2.9824   C1=0  Length=1
-New Line.L44_45  Bus1=44  Bus2=45  R1=0.5740   X1=0.7238   C1=0  Length=1
-New Line.L45_46  Bus1=45  Bus2=46  R1=6.7945   X1=8.5665   C1=0  Length=1
-New Line.L46_47  Bus1=46  Bus2=47  R1=0.0562   X1=0.0749   C1=0  Length=1
+! Cabo de Alumínio (CA) 4 AWG - distribuição MT
+New WireData.CA_4AWG
+~ Rac=0.5280
+~ GMRac=0.00330
+~ Radius=0.00523
+~ normamps=200
+~ emergamps=240
 
-! --- Ramal da barra 5: barras 48 a 51 ---
-New Line.L5_48   Bus1=5   Bus2=48  R1=0.2121   X1=0.5241   C1=0  Length=1
-New Line.L48_49  Bus1=48  Bus2=49  R1=5.3096   X1=12.9964  C1=0  Length=1
-New Line.L49_50  Bus1=49  Bus2=50  R1=18.0814  X1=44.2425  C1=0  Length=1
-New Line.L50_51  Bus1=50  Bus2=51  R1=5.1287   X1=12.5471  C1=0  Length=1
+! CA 2 AWG - distribuição MT média
+New WireData.CA_2AWG
+~ Rac=0.3320
+~ GMRac=0.00416
+~ Radius=0.00659
+~ normamps=250
+~ emergamps=300
 
-! --- Ramal da barra 9: barras 52 a 53 ---
-New Line.L9_52   Bus1=9   Bus2=52  R1=5.7900   X1=2.9512   C1=0  Length=1
-New Line.L52_53  Bus1=52  Bus2=53  R1=20.7081  X1=6.9505   C1=0  Length=1
+! CA 6 AWG - ramal MT leve
+New WireData.CA_6AWG
+~ Rac=0.8380
+~ GMRac=0.00261
+~ Radius=0.00414
+~ normamps=150
+~ emergamps=180
 
-! --- Ramal da barra 10: barras 54 a 66 ---
-New Line.L10_54  Bus1=10  Bus2=54  R1=10.8563  X1=5.5280   C1=0  Length=1
-New Line.L54_55  Bus1=54  Bus2=55  R1=12.6657  X1=6.4514   C1=0  Length=1
-New Line.L55_56  Bus1=55  Bus2=56  R1=17.7320  X1=9.0282   C1=0  Length=1
-New Line.L56_57  Bus1=56  Bus2=57  R1=17.5510  X1=8.9408   C1=0  Length=1
-New Line.L57_58  Bus1=57  Bus2=58  R1=99.2041  X1=33.2989  C1=0  Length=1
-New Line.L58_59  Bus1=58  Bus2=59  R1=48.8970  X1=16.4092  C1=0  Length=1
-New Line.L59_60  Bus1=59  Bus2=60  R1=18.9798  X1=6.2767   C1=0  Length=1
-New Line.L60_61  Bus1=60  Bus2=61  R1=24.0898  X1=7.3124   C1=0  Length=1
-New Line.L61_62  Bus1=61  Bus2=62  R1=31.6642  X1=16.1285  C1=0  Length=1
-New Line.L62_63  Bus1=62  Bus2=63  R1=60.7703  X1=3.0947   C1=0  Length=1
-New Line.L63_64  Bus1=63  Bus2=64  R1=9.0469   X1=4.6046   C1=0  Length=1
-New Line.L64_65  Bus1=64  Bus2=65  R1=44.3299  X1=22.5799  C1=0  Length=1
-New Line.L65_66  Bus1=65  Bus2=66  R1=64.9506  X1=33.0805  C1=0  Length=1
+! Cabo de Cobre (CU) 2 AWG - BT/MT R dominante
+New WireData.CU_2AWG
+~ Rac=0.3410
+~ GMRac=0.00416
+~ Radius=0.00659
+~ normamps=130
+~ emergamps=156
 
-! --- Ramal da barra 12: barras 67 a 68 ---
-New Line.L12_67  Bus1=12  Bus2=67  R1=12.5534  X1=3.8122   C1=0  Length=1
-New Line.L67_68  Bus1=67  Bus2=68  R1=0.2932   X1=0.0873   C1=0  Length=1
+! CU 4 AWG - ramal resistivo
+New WireData.CU_4AWG
+~ Rac=0.5420
+~ GMRac=0.00330
+~ Radius=0.00523
+~ normamps=100
+~ emergamps=120
 
-! --- Ramal da barra 13: barras 69 a 70 ---
-New Line.L13_69  Bus1=13  Bus2=69  R1=46.1330  X1=15.2487  C1=0  Length=1
-New Line.L69_70  Bus1=69  Bus2=70  R1=0.2932   X1=0.0998   C1=0  Length=1
+! Barra rigida de cobre (busbar)
+New WireData.CU_BUSBAR
+~ Rac=0.0100
+~ GMRac=0.01000
+~ Radius=0.01500
+~ normamps=9999
+~ emergamps=9999
+
+! ============================================================
+!  LINECODES
+!  r1/x1 em ohm/km (parametros medianos de cada grupo)
+!  c1=0 pois bshl=0 nos dados originais
+!  Agrupamento por nivel de tensao e razao X/R:
+!
+!   LC_BARRAMENTO  : barramento rigido               X/R = 1.00
+!   LC_AT_TRONCO   : tronco de transmissao AT        X/R = 2.40
+!   LC_AT_RAMAL    : ramais de derivacao AT           X/R = 2.45
+!   LC_MT_ALTA_R   : distribuicao MT condutor medio   X/R = 0.51
+!   LC_MT_MEDIO    : distribuicao MT media            X/R = 1.17
+!   LC_MT_LEVE     : ramal MT leve                    X/R = 1.22
+!   LC_BT_R_DOM    : distribuicao BT/MT R dominante   X/R = 0.33
+!   LC_RESISTIVA   : cabo essencialmente resistivo     X/R = 0.05
+! ============================================================
+
+New LineCode.LC_BARRAMENTO  nphases=3  r1=0.0006  x1=0.0006  c1=0  r0=0.0006  x0=0.0006  c0=0  units=km  normamps=9999  emergamps=9999
+! Barramento rigido / conexao de barra (representa L3_4, Z = 0.0006+j0.0006 pu)
+
+New LineCode.LC_AT_TRONCO   nphases=3  r1=0.0312  x1=0.0749  c1=0  r0=0.0936  x0=0.2246  c0=0  units=km  normamps=600   emergamps=720
+! AT Tronco de transmissao - CAA Grosbeak, X/R=2.40
+! Representa: L1_2, L2_3 (1.000 km cada), L4_5 (3.000 km)
+
+New LineCode.LC_AT_RAMAL    nphases=3  r1=3.9931  x1=9.7644  c1=0  r0=11.9793 x0=29.2932 c0=0  units=km  normamps=400   emergamps=480
+! AT Ramal de derivacao - CAA Linnet, X/R=2.45
+! Representa: L3_29, L4_37, L5_48, L29_30, L37_38, L48_49, L49_50, L50_51
+
+New LineCode.LC_MT_ALTA_R   nphases=3  r1=17.5510 x1=8.9408  c1=0  r0=52.6530 x0=26.8224 c0=0  units=km  normamps=200   emergamps=240
+! MT distribuicao - CA 4AWG, X/R=0.51
+! Representa: L6_7 a L9_10, L9_52, L10_54, L54_55..L56_57, L61_62, L63_64..L65_66
+
+New LineCode.LC_MT_MEDIO    nphases=3  r1=4.5640  x1=5.3284  c1=0  r0=13.6920 x0=15.9852 c0=0  units=km  normamps=250   emergamps=300
+! MT distribuicao media - CA 2AWG, X/R=1.17
+! Representa: L5_6, L38_39..L43_44, L44_45..L45_46
+
+New LineCode.LC_MT_LEVE     nphases=3  r1=0.0842  x1=0.1029  c1=0  r0=0.2526  x0=0.3087  c0=0  units=km  normamps=150   emergamps=180
+! MT ramal leve - CA 6AWG, X/R=1.22
+! Representa: L40_41, L46_47
+
+New LineCode.LC_BT_R_DOM    nphases=3  r1=21.6065 x1=7.1439  c1=0  r0=64.8195 x0=21.4317 c0=0  units=km  normamps=100   emergamps=120
+! BT/MT R dominante - CU 2AWG, X/R=0.33
+! Representa: L10_11..L27_28, L30_31..L35_36, L52_53, L57_58..L60_61, L12_67..L69_70
+
+New LineCode.LC_RESISTIVA   nphases=3  r1=60.7703 x1=3.0947  c1=0  r0=182.3109 x0=9.2841 c0=0  units=km  normamps=100   emergamps=120
+! Cabo essencialmente resistivo - CU 4AWG, X/R=0.05
+! Representa: L62_63
+
+! ============================================================
+!  LINEGEOMETRY
+!  Posicoes dos condutores (m) - sistemas de coordenadas OpenDSS:
+!   x = posicao horizontal (m), h = altura acima do solo (m)
+!  Configuracoes tipicas de torre/poste
+! ============================================================
+
+! --- Torre de transmissao AT - tronco principal ---
+! Configuracao horizontal simetrica, altura 20-22 m
+New LineGeometry.GEO_AT_TRONCO  nconds=3  nphases=3  reduce=no
+~ cond=1  wire=CAA_GROSBEAK  x=-4.5  h=20.0  units=m
+~ cond=2  wire=CAA_GROSBEAK  x= 0.0  h=21.5  units=m
+~ cond=3  wire=CAA_GROSBEAK  x= 4.5  h=20.0  units=m
+
+! --- Torre de ramificacao AT - ramais ---
+! Configuracao horizontal mais compacta, altura 18-19 m
+New LineGeometry.GEO_AT_RAMAL   nconds=3  nphases=3  reduce=no
+~ cond=1  wire=CAA_LINNET  x=-3.5  h=18.0  units=m
+~ cond=2  wire=CAA_LINNET  x= 0.0  h=19.5  units=m
+~ cond=3  wire=CAA_LINNET  x= 3.5  h=18.0  units=m
+
+! --- Poste MT distribuicao - condutor medio ---
+! Configuracao triangular, altura 10-12 m
+New LineGeometry.GEO_MT_ALTA_R  nconds=3  nphases=3  reduce=no
+~ cond=1  wire=CA_4AWG  x=-1.2  h=10.5  units=m
+~ cond=2  wire=CA_4AWG  x= 0.0  h=12.0  units=m
+~ cond=3  wire=CA_4AWG  x= 1.2  h=10.5  units=m
+
+! --- Poste MT distribuicao media ---
+! Configuracao triangular compacta, altura 9-10.5 m
+New LineGeometry.GEO_MT_MEDIO   nconds=3  nphases=3  reduce=no
+~ cond=1  wire=CA_2AWG  x=-1.0  h= 9.0  units=m
+~ cond=2  wire=CA_2AWG  x= 0.0  h=10.5  units=m
+~ cond=3  wire=CA_2AWG  x= 1.0  h= 9.0  units=m
+
+! --- Poste MT ramal leve ---
+! Configuracao triangular estreita, altura 8.5-10 m
+New LineGeometry.GEO_MT_LEVE    nconds=3  nphases=3  reduce=no
+~ cond=1  wire=CA_6AWG  x=-0.8  h= 8.5  units=m
+~ cond=2  wire=CA_6AWG  x= 0.0  h=10.0  units=m
+~ cond=3  wire=CA_6AWG  x= 0.8  h= 8.5  units=m
+
+! --- Poste BT/MT - R dominante (vertical) ---
+! Configuracao vertical tipica de rede de distribuicao, altura 7.5-8.5 m
+New LineGeometry.GEO_BT_R_DOM   nconds=3  nphases=3  reduce=no
+~ cond=1  wire=CU_2AWG  x= 0.0  h= 8.5  units=m
+~ cond=2  wire=CU_2AWG  x= 0.3  h= 8.0  units=m
+~ cond=3  wire=CU_2AWG  x= 0.0  h= 7.5  units=m
+
+! --- Ramal resistivo especial ---
+New LineGeometry.GEO_RESISTIVA  nconds=3  nphases=3  reduce=no
+~ cond=1  wire=CU_4AWG  x=-0.5  h= 7.0  units=m
+~ cond=2  wire=CU_4AWG  x= 0.0  h= 7.5  units=m
+~ cond=3  wire=CU_4AWG  x= 0.5  h= 7.0  units=m
+
+! --- Barramento rigido ---
+New LineGeometry.GEO_BARRAMENTO nconds=3  nphases=3  reduce=no
+~ cond=1  wire=CU_BUSBAR  x=-0.5  h= 5.0  units=m
+~ cond=2  wire=CU_BUSBAR  x= 0.0  h= 5.0  units=m
+~ cond=3  wire=CU_BUSBAR  x= 0.5  h= 5.0  units=m
+
+! ============================================================
+!  LINHAS
+!  Formato: New Line.Nome  Bus1=  Bus2=
+!           ~ LineCode=    Geometry=   Length= (km equivalente)
+!
+!  O comprimento equivalente e calculado como:
+!    Length = R_original / r1_linecode
+!  garantindo que r1 * Length = R_total dos dados originais
+!
+!  Linhas agrupadas por tipo de LineCode
+! ============================================================
+
+! --- LC_BARRAMENTO ---
+New Line.L3_4    Bus1=3  Bus2=4  ~ LineCode=LC_BARRAMENTO  Geometry=GEO_BARRAMENTO  Length=1.000000
+
+! --- LC_AT_TRONCO ---
+New Line.L1_2    Bus1=1  Bus2=2  ~ LineCode=LC_AT_TRONCO   Geometry=GEO_AT_TRONCO   Length=1.000000
+New Line.L2_3    Bus1=2  Bus2=3  ~ LineCode=LC_AT_TRONCO   Geometry=GEO_AT_TRONCO   Length=1.000000
+New Line.L4_5    Bus1=4  Bus2=5  ~ LineCode=LC_AT_TRONCO   Geometry=GEO_AT_TRONCO   Length=3.000000
+
+! --- LC_AT_RAMAL ---
+New Line.L3_29   Bus1=3  Bus2=29 ~ LineCode=LC_AT_RAMAL    Geometry=GEO_AT_RAMAL    Length=0.068746
+New Line.L4_37   Bus1=4  Bus2=37 ~ LineCode=LC_AT_RAMAL    Geometry=GEO_AT_RAMAL    Length=0.068746
+New Line.L5_48   Bus1=5  Bus2=48 ~ LineCode=LC_AT_RAMAL    Geometry=GEO_AT_RAMAL    Length=0.053121
+New Line.L29_30  Bus1=29 Bus2=30 ~ LineCode=LC_AT_RAMAL    Geometry=GEO_AT_RAMAL    Length=1.000000
+New Line.L37_38  Bus1=37 Bus2=38 ~ LineCode=LC_AT_RAMAL    Geometry=GEO_AT_RAMAL    Length=1.000000
+New Line.L48_49  Bus1=48 Bus2=49 ~ LineCode=LC_AT_RAMAL    Geometry=GEO_AT_RAMAL    Length=1.329587
+New Line.L49_50  Bus1=49 Bus2=50 ~ LineCode=LC_AT_RAMAL    Geometry=GEO_AT_RAMAL    Length=4.528067
+New Line.L50_51  Bus1=50 Bus2=51 ~ LineCode=LC_AT_RAMAL    Geometry=GEO_AT_RAMAL    Length=1.284418
+
+! --- LC_MT_ALTA_R ---
+New Line.L6_7    Bus1=6  Bus2=7  ~ LineCode=LC_MT_ALTA_R   Geometry=GEO_MT_ALTA_R   Length=1.301105
+New Line.L7_8    Bus1=7  Bus2=8  ~ LineCode=LC_MT_ALTA_R   Geometry=GEO_MT_ALTA_R   Length=1.354783
+New Line.L8_9    Bus1=8  Bus2=9  ~ LineCode=LC_MT_ALTA_R   Geometry=GEO_MT_ALTA_R   Length=0.327765
+New Line.L9_10   Bus1=9  Bus2=10 ~ LineCode=LC_MT_ALTA_R   Geometry=GEO_MT_ALTA_R   Length=0.175261
+New Line.L9_52   Bus1=9  Bus2=52 ~ LineCode=LC_MT_ALTA_R   Geometry=GEO_MT_ALTA_R   Length=0.329907
+New Line.L10_54  Bus1=10 Bus2=54 ~ LineCode=LC_MT_ALTA_R   Geometry=GEO_MT_ALTA_R   Length=0.618582
+New Line.L54_55  Bus1=54 Bus2=55 ~ LineCode=LC_MT_ALTA_R   Geometry=GEO_MT_ALTA_R   Length=0.721656
+New Line.L55_56  Bus1=55 Bus2=56 ~ LineCode=LC_MT_ALTA_R   Geometry=GEO_MT_ALTA_R   Length=1.010245
+New Line.L56_57  Bus1=56 Bus2=57 ~ LineCode=LC_MT_ALTA_R   Geometry=GEO_MT_ALTA_R   Length=1.000000
+New Line.L61_62  Bus1=61 Bus2=62 ~ LineCode=LC_MT_ALTA_R   Geometry=GEO_MT_ALTA_R   Length=1.804105
+New Line.L63_64  Bus1=63 Bus2=64 ~ LineCode=LC_MT_ALTA_R   Geometry=GEO_MT_ALTA_R   Length=0.515464
+New Line.L64_65  Bus1=64 Bus2=65 ~ LineCode=LC_MT_ALTA_R   Geometry=GEO_MT_ALTA_R   Length=2.525539
+New Line.L65_66  Bus1=65 Bus2=66 ~ LineCode=LC_MT_ALTA_R   Geometry=GEO_MT_ALTA_R   Length=3.700974
+
+! --- LC_MT_MEDIO ---
+New Line.L5_6    Bus1=5  Bus2=6  ~ LineCode=LC_MT_MEDIO    Geometry=GEO_MT_MEDIO    Length=0.343142
+New Line.L38_39  Bus1=38 Bus2=39 ~ LineCode=LC_MT_MEDIO    Geometry=GEO_MT_MEDIO    Length=1.439428
+New Line.L39_40  Bus1=39 Bus2=40 ~ LineCode=LC_MT_MEDIO    Geometry=GEO_MT_MEDIO    Length=0.415573
+New Line.L41_42  Bus1=41 Bus2=42 ~ LineCode=LC_MT_MEDIO    Geometry=GEO_MT_MEDIO    Length=9.958924
+New Line.L42_43  Bus1=42 Bus2=43 ~ LineCode=LC_MT_MEDIO    Geometry=GEO_MT_MEDIO    Length=4.237046
+New Line.L43_44  Bus1=43 Bus2=44 ~ LineCode=LC_MT_MEDIO    Geometry=GEO_MT_MEDIO    Length=0.560495
+New Line.L44_45  Bus1=44 Bus2=45 ~ LineCode=LC_MT_MEDIO    Geometry=GEO_MT_MEDIO    Length=0.125769
+New Line.L45_46  Bus1=45 Bus2=46 ~ LineCode=LC_MT_MEDIO    Geometry=GEO_MT_MEDIO    Length=1.489175
+
+! --- LC_MT_LEVE ---
+New Line.L40_41  Bus1=40 Bus2=41 ~ LineCode=LC_MT_LEVE     Geometry=GEO_MT_LEVE     Length=1.334441
+New Line.L46_47  Bus1=46 Bus2=47 ~ LineCode=LC_MT_LEVE     Geometry=GEO_MT_LEVE     Length=0.667460
+
+! --- LC_RESISTIVA ---
+New Line.L62_63  Bus1=62 Bus2=63 ~ LineCode=LC_RESISTIVA   Geometry=GEO_RESISTIVA   Length=1.000000
+
+! --- LC_BT_R_DOM ---
+New Line.L10_11  Bus1=10 Bus2=11 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=2.365006
+New Line.L11_12  Bus1=11 Bus2=12 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=0.540574
+New Line.L12_13  Bus1=12 Bus2=13 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=2.054267
+New Line.L13_14  Bus1=13 Bus2=14 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=2.974201
+New Line.L14_15  Bus1=14 Bus2=15 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=3.014765
+New Line.L15_16  Bus1=15 Bus2=16 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=3.055293
+New Line.L16_17  Bus1=16 Bus2=17 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=0.567716
+New Line.L17_18  Bus1=17 Bus2=18 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=1.081150
+New Line.L18_19  Bus1=18 Bus2=19 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=0.013575
+New Line.L19_20  Bus1=19 Bus2=20 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=0.945554
+New Line.L20_21  Bus1=20 Bus2=21 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=0.608149
+New Line.L21_22  Bus1=21 Bus2=22 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=0.986433
+New Line.L22_23  Bus1=22 Bus2=23 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=0.040429
+New Line.L23_24  Bus1=23 Bus2=24 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=0.459440
+New Line.L24_25  Bus1=24 Bus2=25 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=1.000000
+New Line.L25_26  Bus1=25 Bus2=26 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=2.162235
+New Line.L26_27  Bus1=26 Bus2=27 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=0.891999
+New Line.L27_28  Bus1=27 Bus2=28 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=0.500146
+New Line.L30_31  Bus1=30 Bus2=31 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=1.148760
+New Line.L31_32  Bus1=31 Bus2=32 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=0.202728
+New Line.L32_33  Bus1=32 Bus2=33 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=1.014504
+New Line.L33_34  Bus1=33 Bus2=34 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=2.422344
+New Line.L34_35  Bus1=34 Bus2=35 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=4.933086
+New Line.L35_36  Bus1=35 Bus2=36 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=4.256537
+New Line.L52_53  Bus1=52 Bus2=53 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=0.958440
+New Line.L57_58  Bus1=57 Bus2=58 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=4.591624
+New Line.L58_59  Bus1=58 Bus2=59 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=2.263994
+New Line.L59_60  Bus1=59 Bus2=60 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=0.878461
+New Line.L60_61  Bus1=60 Bus2=61 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=1.114870
+New Line.L12_67  Bus1=12 Bus2=67 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=0.581003
+New Line.L67_68  Bus1=67 Bus2=68 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=0.013570
+New Line.L13_69  Bus1=13 Bus2=69 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=2.135249
+New Line.L69_70  Bus1=69 Bus2=70 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=0.013575
 
 ! ============================================================
 !  CARGAS
-!  Pc e Qc em p.u. (base 100 MVA) -> kW = Pc*100000, kvar = Qc*100000
+!  kW e kvar convertidos de p.u. (base 100 MVA)
 !  Barras com Pc=Qc=0 omitidas
 ! ============================================================
 

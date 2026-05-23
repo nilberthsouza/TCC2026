@@ -26,12 +26,16 @@ from display_utils   import (section, pline, fmt_z, W,
 # ─────────────────────────────────────────────────────────────────────────────
 # CONFIGURAÇÕES
 # ─────────────────────────────────────────────────────────────────────────────
-DSS_FILE     = r"C:\Users\nilbe\Documents\DISCIPLINAS\TCC2026\Localizador\34Bus\34busModTotal14mi.dss"
+#DSS_FILE     = r"C:\Users\nilbe\Documents\DISCIPLINAS\TCC2026\Localizador\34Bus\34busModTotal14mi.dss"
+DSS_FILE     = r"C:\Users\nilbe\Documents\DISCIPLINAS\TCC2026\Localizador\69bus.dss"
 
+#RELAY_BUS    = "812"
+RELAY_BUS    = "12"
+#RELAY_LINE   ="Line.L5"
+RELAY_LINE   ="Line.L11_12"
+#FAULT_BUSES  = ["850","854","822","834","840","848"]
+FAULT_BUSES  = ["19","27","32","36","38","45",]
 
-RELAY_BUS    = "812"
-RELAY_LINE   = "Line.L5"
-FAULT_BUSES  = ["850","854","822","834","840","848"]
 REF_LINECODE = "300"
 SBASE_MVA    = 40.0
 SBASE        = SBASE_MVA * 1e6
