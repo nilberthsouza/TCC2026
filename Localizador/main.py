@@ -28,13 +28,11 @@ from display_utils   import (section, pline, fmt_z, W,
 # ─────────────────────────────────────────────────────────────────────────────
 DSS_FILE     = r"C:\Users\nilbe\Documents\DISCIPLINAS\TCC2026\Localizador\34Bus\34busModTotal14mi.dss"
 
-#Alimentador Real
-DSS_FILE     = r"C:\Users\nilbe\Documents\DISCIPLINAS\TCC2026\Localizador\JMLT310\Master_DU01_2023124950_JMLT310_--MBS-1P-T--.dss"
 
-RELAY_BUS    = "NODE#1361434537"
-RELAY_LINE   = "Line.SMT_1094029690"
-FAULT_BUSES  = ["NODE#1981522703","NODE#1981522703", "NODE#442497657", "NODE#424247123"]
-REF_LINECODE = "77_3"
+RELAY_BUS    = "812"
+RELAY_LINE   = "Line.L5"
+FAULT_BUSES  = ["850","854","822","834","840","848"]
+REF_LINECODE = "300"
 SBASE_MVA    = 40.0
 SBASE        = SBASE_MVA * 1e6
 
@@ -287,7 +285,7 @@ print(f"  {'Barra':<8} {'d Takagi (mi)':>14}  {'Ref (mi)':>10}  {'Erro (mi)':>10
 print(f"  {'-' * 96}")
 for bus, d_mi, ref, Va in resultados:
     erro   = d_mi - ref
-    pct    = erro / 14 * 100
+    pct    = abs(erro / 14 * 100)
     Va_mag = abs(Va)
     Va_pu  = Va_mag / Vln
     Va_ang = np.degrees(np.angle(Va))

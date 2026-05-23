@@ -1,0 +1,179 @@
+! ============================================================
+!  OpenDSS - Modelo Teste (baseado em IEEE 14 Barras - 70 barras)
+!  Convertido do formato MATLAB (caso.m)
+!  Base: 100 MVA, 1.0 kV (sistema em p.u. -> tensao base definida abaixo)
+! ============================================================
+
+Clear
+
+! --- Configuracoes do circuito ---
+! Barra 1 e a slack (tipo 2 no MATLAB = referencia VTeta)
+! Tensao base assumida: 100 kV (ajuste conforme necessario)
+
+New Circuit.ModeleTeste
+~ basekv=100
+~ pu=1.0
+~ angle=0
+~ frequency=60
+~ phases=3
+
+! ============================================================
+!  LINHAS (Lines)
+!  Todas as linhas sao modeladas sem transformador (tap=1)
+!  Parametros em p.u. na base 100 MVA / 100 kV
+!  r e x em p.u. -> convertidos para ohms/km usando Z_base = kV^2/MVA
+!  Z_base = 100^2/100 = 100 ohms
+!  Como nao ha comprimento fisico, usamos length=1 km e r1,x1 em ohms/km
+! ============================================================
+
+! Formato: New Line.NomeL  Bus1=De  Bus2=Para  R1=(r*Zbase) X1=(x*Zbase) C1=0  Length=1
+
+! --- Ramo principal (barras 1 a 28) ---
+New Line.L1_2    Bus1=1   Bus2=2   R1=0.0312   X1=0.0749   C1=0  Length=1
+New Line.L2_3    Bus1=2   Bus2=3   R1=0.0312   X1=0.0749   C1=0  Length=1
+New Line.L3_4    Bus1=3   Bus2=4   R1=0.0006   X1=0.0006   C1=0  Length=1
+New Line.L4_5    Bus1=4   Bus2=5   R1=0.0936   X1=0.2246   C1=0  Length=1
+New Line.L5_6    Bus1=5   Bus2=6   R1=1.5661   X1=1.8343   C1=0  Length=1
+New Line.L6_7    Bus1=6   Bus2=7   R1=22.8357  X1=11.6300  C1=0  Length=1
+New Line.L7_8    Bus1=7   Bus2=8   R1=23.7778  X1=12.1104  C1=0  Length=1
+New Line.L8_9    Bus1=8   Bus2=9   R1=5.7526   X1=2.9324   C1=0  Length=1
+New Line.L9_10   Bus1=9   Bus2=10  R1=3.0760   X1=1.5661   C1=0  Length=1
+New Line.L10_11  Bus1=10  Bus2=11  R1=51.0995  X1=16.8897  C1=0  Length=1
+New Line.L11_12  Bus1=11  Bus2=12  R1=11.6799  X1=3.8621   C1=0  Length=1
+New Line.L12_13  Bus1=12  Bus2=13  R1=44.3860  X1=14.6685  C1=0  Length=1
+New Line.L13_14  Bus1=13  Bus2=14  R1=64.2643  X1=21.2135  C1=0  Length=1
+New Line.L14_15  Bus1=14  Bus2=15  R1=65.1378  X1=21.5254  C1=0  Length=1
+New Line.L15_16  Bus1=15  Bus2=16  R1=66.0113  X1=21.8124  C1=0  Length=1
+New Line.L16_17  Bus1=16  Bus2=17  R1=12.2664  X1=4.0555   C1=0  Length=1
+New Line.L17_18  Bus1=17  Bus2=18  R1=23.3598  X1=7.7242   C1=0  Length=1
+New Line.L18_19  Bus1=18  Bus2=19  R1=0.2932   X1=0.0998   C1=0  Length=1
+New Line.L19_20  Bus1=19  Bus2=20  R1=20.4398  X1=6.7571   C1=0  Length=1
+New Line.L20_21  Bus1=20  Bus2=21  R1=13.1399  X1=4.3425   C1=0  Length=1
+New Line.L21_22  Bus1=21  Bus2=22  R1=21.3133  X1=7.0441   C1=0  Length=1
+New Line.L22_23  Bus1=22  Bus2=23  R1=0.8735   X1=0.2870   C1=0  Length=1
+New Line.L23_24  Bus1=23  Bus2=24  R1=9.9267   X1=3.2818   C1=0  Length=1
+New Line.L24_25  Bus1=24  Bus2=25  R1=21.6065  X1=7.1439   C1=0  Length=1
+New Line.L25_26  Bus1=25  Bus2=26  R1=46.7195  X1=15.4422  C1=0  Length=1
+New Line.L26_27  Bus1=26  Bus2=27  R1=19.2731  X1=6.3703   C1=0  Length=1
+New Line.L27_28  Bus1=27  Bus2=28  R1=10.8064  X1=3.5689   C1=0  Length=1
+
+! --- Ramal a partir da barra 3 (barras 29 a 36) ---
+New Line.L3_29   Bus1=3   Bus2=29  R1=0.2745   X1=0.6738   C1=0  Length=1
+New Line.L29_30  Bus1=29  Bus2=30  R1=3.9931   X1=9.7644   C1=0  Length=1
+New Line.L30_31  Bus1=30  Bus2=31  R1=24.8197  X1=8.2046   C1=0  Length=1
+New Line.L31_32  Bus1=31  Bus2=32  R1=4.3800   X1=1.4475   C1=0  Length=1
+New Line.L32_33  Bus1=32  Bus2=33  R1=21.8998  X1=7.2375   C1=0  Length=1
+New Line.L33_34  Bus1=33  Bus2=34  R1=52.3473  X1=17.5697  C1=0  Length=1
+New Line.L34_35  Bus1=34  Bus2=35  R1=106.5664 X1=35.2268  C1=0  Length=1
+New Line.L35_36  Bus1=35  Bus2=36  R1=91.9666  X1=30.4039  C1=0  Length=1
+
+! --- Ramal a partir da barra 4 (barras 37 a 47) ---
+New Line.L4_37   Bus1=4   Bus2=37  R1=0.2745   X1=0.6738   C1=0  Length=1
+New Line.L37_38  Bus1=37  Bus2=38  R1=3.9931   X1=9.7644   C1=0  Length=1
+New Line.L38_39  Bus1=38  Bus2=39  R1=6.5699   X1=7.6743   C1=0  Length=1
+New Line.L39_40  Bus1=39  Bus2=40  R1=1.8967   X1=2.2149   C1=0  Length=1
+New Line.L40_41  Bus1=40  Bus2=41  R1=0.1123   X1=0.1310   C1=0  Length=1
+New Line.L41_42  Bus1=41  Bus2=42  R1=45.4405  X1=53.0898  C1=0  Length=1
+New Line.L42_43  Bus1=42  Bus2=43  R1=19.3417  X1=22.6048  C1=0  Length=1
+New Line.L43_44  Bus1=43  Bus2=44  R1=2.5581   X1=2.9824   C1=0  Length=1
+New Line.L44_45  Bus1=44  Bus2=45  R1=0.5740   X1=0.7238   C1=0  Length=1
+New Line.L45_46  Bus1=45  Bus2=46  R1=6.7945   X1=8.5665   C1=0  Length=1
+New Line.L46_47  Bus1=46  Bus2=47  R1=0.0562   X1=0.0749   C1=0  Length=1
+
+! --- Ramal a partir da barra 5 (barras 48 a 51) ---
+New Line.L5_48   Bus1=5   Bus2=48  R1=0.2121   X1=0.5241   C1=0  Length=1
+New Line.L48_49  Bus1=48  Bus2=49  R1=5.3096   X1=12.9964  C1=0  Length=1
+New Line.L49_50  Bus1=49  Bus2=50  R1=18.0814  X1=44.2425  C1=0  Length=1
+New Line.L50_51  Bus1=50  Bus2=51  R1=5.1287   X1=12.5471  C1=0  Length=1
+
+! --- Ramal a partir da barra 9 (barras 52 a 53) ---
+New Line.L9_52   Bus1=9   Bus2=52  R1=5.7900   X1=2.9512   C1=0  Length=1
+New Line.L52_53  Bus1=52  Bus2=53  R1=20.7081  X1=6.9505   C1=0  Length=1
+
+! --- Ramal a partir da barra 10 (barras 54 a 66) ---
+New Line.L10_54  Bus1=10  Bus2=54  R1=10.8563  X1=5.5280   C1=0  Length=1
+New Line.L54_55  Bus1=54  Bus2=55  R1=12.6657  X1=6.4514   C1=0  Length=1
+New Line.L55_56  Bus1=55  Bus2=56  R1=17.7320  X1=9.0282   C1=0  Length=1
+New Line.L56_57  Bus1=56  Bus2=57  R1=17.5510  X1=8.9408   C1=0  Length=1
+New Line.L57_58  Bus1=57  Bus2=58  R1=99.2041  X1=33.2989  C1=0  Length=1
+New Line.L58_59  Bus1=58  Bus2=59  R1=48.8970  X1=16.4092  C1=0  Length=1
+New Line.L59_60  Bus1=59  Bus2=60  R1=18.9798  X1=6.2767   C1=0  Length=1
+New Line.L60_61  Bus1=60  Bus2=61  R1=24.0898  X1=7.3124   C1=0  Length=1
+New Line.L61_62  Bus1=61  Bus2=62  R1=31.6642  X1=16.1285  C1=0  Length=1
+New Line.L62_63  Bus1=62  Bus2=63  R1=60.7703  X1=3.0947   C1=0  Length=1
+New Line.L63_64  Bus1=63  Bus2=64  R1=9.0469   X1=4.6046   C1=0  Length=1
+New Line.L64_65  Bus1=64  Bus2=65  R1=44.3299  X1=22.5799  C1=0  Length=1
+New Line.L65_66  Bus1=65  Bus2=66  R1=64.9506  X1=33.0805  C1=0  Length=1
+
+! --- Ramal a partir da barra 12 (barras 67 a 68) ---
+New Line.L12_67  Bus1=12  Bus2=67  R1=12.5534  X1=3.8122   C1=0  Length=1
+New Line.L67_68  Bus1=67  Bus2=68  R1=0.2932   X1=0.0873   C1=0  Length=1
+
+! --- Ramal a partir da barra 13 (barras 69 a 70) ---
+New Line.L13_69  Bus1=13  Bus2=69  R1=46.1330  X1=15.2487  C1=0  Length=1
+New Line.L69_70  Bus1=69  Bus2=70  R1=0.2932   X1=0.0998   C1=0  Length=1
+
+! ============================================================
+!  CARGAS (Loads)
+!  Pc e Qc em p.u. na base 100 MVA -> MW = Pc*100, Mvar = Qc*100
+!  Barras sem carga (Pc=Qc=0) nao sao declaradas
+! ============================================================
+
+New Load.L7    Bus1=7   Phases=3  kV=100  kW=87.80    kvar=72.00
+New Load.L8    Bus1=8   Phases=3  kV=100  kW=1345.50  kvar=72.00
+New Load.L9    Bus1=9   Phases=3  kV=100  kW=2488.70  kvar=1781.00
+New Load.L10   Bus1=10  Phases=3  kV=100  kW=1000.00  kvar=721.00
+New Load.L11   Bus1=11  Phases=3  kV=100  kW=933.00   kvar=666.60
+New Load.L12   Bus1=12  Phases=3  kV=100  kW=4850.00  kvar=3460.90
+New Load.L13   Bus1=13  Phases=3  kV=100  kW=4850.00  kvar=3460.00
+New Load.L14   Bus1=14  Phases=3  kV=100  kW=271.00   kvar=182.00
+New Load.L15   Bus1=15  Phases=3  kV=100  kW=271.00   kvar=152.00
+New Load.L17   Bus1=17  Phases=3  kV=100  kW=1518.00  kvar=1019.80
+New Load.L18   Bus1=18  Phases=3  kV=100  kW=1650.00  kvar=1177.50
+New Load.L19   Bus1=19  Phases=3  kV=100  kW=1650.00  kvar=1177.50
+New Load.L21   Bus1=21  Phases=3  kV=100  kW=31.60    kvar=21.20
+New Load.L22   Bus1=22  Phases=3  kV=100  kW=3798.30  kvar=2710.00
+New Load.L23   Bus1=23  Phases=3  kV=100  kW=176.20   kvar=118.40
+New Load.L25   Bus1=25  Phases=3  kV=100  kW=939.00   kvar=667.00
+New Load.L27   Bus1=27  Phases=3  kV=100  kW=466.70   kvar=333.00
+New Load.L28   Bus1=28  Phases=3  kV=100  kW=466.70   kvar=333.00
+New Load.L29   Bus1=29  Phases=3  kV=100  kW=866.70   kvar=618.50
+New Load.L30   Bus1=30  Phases=3  kV=100  kW=866.70   kvar=618.50
+New Load.L34   Bus1=34  Phases=3  kV=100  kW=458.00   kvar=326.00
+New Load.L35   Bus1=35  Phases=3  kV=100  kW=650.10   kvar=554.90
+New Load.L36   Bus1=36  Phases=3  kV=100  kW=192.00   kvar=129.00
+New Load.L37   Bus1=37  Phases=3  kV=100  kW=866.70   kvar=619.50
+New Load.L38   Bus1=38  Phases=3  kV=100  kW=866.70   kvar=619.50
+New Load.L40   Bus1=40  Phases=3  kV=100  kW=800.00   kvar=570.90
+New Load.L41   Bus1=41  Phases=3  kV=100  kW=800.00   kvar=570.90
+New Load.L42   Bus1=42  Phases=3  kV=100  kW=39.20    kvar=32.50
+New Load.L44   Bus1=44  Phases=3  kV=100  kW=200.00   kvar=142.70
+New Load.L46   Bus1=46  Phases=3  kV=100  kW=307.60   kvar=878.70
+New Load.L47   Bus1=47  Phases=3  kV=100  kW=307.60   kvar=878.70
+New Load.L49   Bus1=49  Phases=3  kV=100  kW=2635.00  kvar=1880.00
+New Load.L50   Bus1=50  Phases=3  kV=100  kW=2822.60  kvar=9149.20
+New Load.L51   Bus1=51  Phases=3  kV=100  kW=12822.60 kvar=9149.20
+New Load.L52   Bus1=52  Phases=3  kV=100  kW=1351.20  kvar=944.20
+New Load.L53   Bus1=53  Phases=3  kV=100  kW=120.20   kvar=89.40
+New Load.L54   Bus1=54  Phases=3  kV=100  kW=44.90    kvar=16.20
+New Load.L55   Bus1=55  Phases=3  kV=100  kW=878.70   kvar=632.20
+New Load.L56   Bus1=56  Phases=3  kV=100  kW=800.00   kvar=570.80
+New Load.L60   Bus1=60  Phases=3  kV=100  kW=66.70    kvar=2402.50
+New Load.L62   Bus1=62  Phases=3  kV=100  kW=41466.70 kvar=29591.00
+New Load.L63   Bus1=63  Phases=3  kV=100  kW=1066.70  kvar=761.20
+New Load.L65   Bus1=65  Phases=3  kV=100  kW=7567.00  kvar=5387.30
+New Load.L66   Bus1=66  Phases=3  kV=100  kW=1967.00  kvar=1391.20
+New Load.L67   Bus1=67  Phases=3  kV=100  kW=600.00   kvar=428.20
+New Load.L68   Bus1=68  Phases=3  kV=100  kW=600.00   kvar=428.20
+New Load.L69   Bus1=69  Phases=3  kV=100  kW=933.30   kvar=666.00
+New Load.L70   Bus1=70  Phases=3  kV=100  kW=9.33     kvar=6.66
+
+! ============================================================
+!  SOLUCAO
+! ============================================================
+
+Set VoltageBases=[100]
+CalcVoltageBases
+
+Solve
+
