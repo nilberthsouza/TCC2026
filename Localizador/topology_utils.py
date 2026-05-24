@@ -248,3 +248,27 @@ def build_leaves_cache(graph: dict, relay_bus: str,
             Z1L, Z0L, L = path_sequence_impedances(path)
             cache[leaf] = (path, Z1L, Z0L, L)
     return cache
+
+
+def find_relay_line(dss, relay_bus: str) -> str:
+    """
+    Encontra automaticamente a linha do relay: aquela cujo bus2
+    (terminal 2) é a barra do relay. Isso garante que o terminal 1
+    aponta para a fonte, preservando o sentido correto da corrente.
+
+    Retorna a string no formato 'Line.<nome>' pronta para uso.
+    Levanta ValueError se nenhuma linha for encontrada.
+    """
+    target = _norm_bus(relay_bus)
+    flag   = dss.lines.first()
+    while flag > 0:
+        name = dss.lines.name
+        dss.circuit.set_active_element(f"Line.{name}")
+        b2 = _norm_bus(dss.cktelement.bus_names[1])
+        if b2 == target:
+            return f"Line.{name}"
+        flag = dss.lines.next()
+    raise ValueError(
+        f"Nenhuma linha encontrada com bus2={relay_bus}. "
+        f"Verifique se RELAY_BUS está correto."
+    )
