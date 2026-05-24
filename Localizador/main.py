@@ -19,7 +19,7 @@ from topology_utils import (build_networkx_graph, calc_ref_distances,
                              path_sequence_impedances, find_feeder_path,
                              find_leaves, get_all_distances_from_relay,
                              find_nearest_bus, build_leaves_cache,
-                             _norm_bus)
+                             _norm_bus, find_relay_line)
 from takagi         import takagi_1ph, takagi_3ph
 from display_utils  import (section, pline, fmt_z, W,
                              print_bases, print_thevenin, print_debug_1ph,
@@ -34,19 +34,26 @@ SISTEMA = 2
 if SISTEMA == 1:
     DSS_FILE    = r"C:\Users\nilbe\Documents\DISCIPLINAS\TCC2026\Localizador\34Bus\34busModTotal14mi.dss"
     RELAY_BUS   = "812"
-    RELAY_LINE  = "Line.L5"
     FAULT_BUSES = ["850", "854", "822", "834", "840", "848"]
 
 elif SISTEMA == 2:
     DSS_FILE    = r"C:\Users\nilbe\Documents\DISCIPLINAS\TCC2026\Localizador\69bus.dss"
-    RELAY_BUS   = "12"
-    RELAY_LINE  = "Line.L11_12"
+    RELAY_BUS   = "1"
     FAULT_BUSES = ["19", "27", "32", "36", "38", "45"]
 
 SBASE_MVA = 40.0
 SBASE     = SBASE_MVA * 1e6
 
 dss = py_dss_interface.DSS()
+
+# Detecta automaticamente a linha do relay:
+# busca a linha cujo bus2 == RELAY_BUS (corrente entra pelo terminal 1, sentido fonte→rede)
+_dss_tmp = py_dss_interface.DSS()
+_dss_tmp.text(f"compile {DSS_FILE}")
+_dss_tmp.text("CalcVoltageBases")
+_dss_tmp.solution.solve()
+RELAY_LINE = find_relay_line(_dss_tmp, RELAY_BUS)
+print(f"  RELAY_LINE detectada automaticamente: {RELAY_LINE}")
 
 # ─────────────────────────────────────────────────────────────────────────────
 # ETAPA 0 — DISTÂNCIAS DE REFERÊNCIA E COMPRIMENTO DO ALIMENTADOR

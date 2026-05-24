@@ -24,10 +24,17 @@ def polar_to_rect(mag: float, ang_deg: float) -> complex:
 
 def compile_circuit(dss, dss_file: str, relay_line: str,
                     add_meter: bool = False) -> None:
-    """Recompila o circuito base e opcionalmente adiciona EnergyMeter."""
+    """Recompila o circuito base e opcionalmente adiciona EnergyMeter.
+
+    Executa CalcVoltageBases antes do solve para garantir que circuitos
+    com Set VoltageBases (como o sistema 69 barras) resolvam corretamente.
+    Para circuitos que já definem as bases internamente (sistema 34 barras)
+    este comando é inócuo.
+    """
     dss.text(f"compile {dss_file}")
     if add_meter:
         dss.text(f"New EnergyMeter.M1 Element={relay_line} Terminal=1")
+    dss.text("CalcVoltageBases")
     dss.solution.solve()
 
 
