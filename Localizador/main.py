@@ -38,7 +38,7 @@ if SISTEMA == 1:
 
 elif SISTEMA == 2:
     DSS_FILE    = r"C:\Users\nilbe\Documents\DISCIPLINAS\TCC2026\Localizador\69bus.dss"
-    RELAY_BUS   = "1"
+    RELAY_BUS   = "2"   # primeira barra downstream do slack (bus2 da linha l1_2)
     FAULT_BUSES = ["19", "27", "32", "36", "38", "45"]
 
 SBASE_MVA = 40.0

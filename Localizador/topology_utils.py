@@ -252,15 +252,24 @@ def build_leaves_cache(graph: dict, relay_bus: str,
 
 def find_relay_line(dss, relay_bus: str) -> str:
     """
-    Encontra automaticamente a linha do relay: aquela cujo bus2
-    (terminal 2) é a barra do relay. Isso garante que o terminal 1
-    aponta para a fonte, preservando o sentido correto da corrente.
+    Encontra automaticamente a linha do relay.
+
+    Critério primário: linha cujo bus2 == relay_bus.
+    Isso garante que o terminal 1 aponta para a fonte,
+    preservando o sentido correto da corrente (fonte → relay → rede).
+
+    Critério secundário (fallback): se o relay_bus for nó raiz
+    (todas as linhas partem dele como bus1), usa a linha com menor
+    comprimento que tenha bus1 == relay_bus — tipicamente o primeiro
+    segmento do tronco principal saindo da subestação.
 
     Retorna a string no formato 'Line.<nome>' pronta para uso.
     Levanta ValueError se nenhuma linha for encontrada.
     """
     target = _norm_bus(relay_bus)
-    flag   = dss.lines.first()
+
+    # Critério primário: bus2 == relay_bus
+    flag = dss.lines.first()
     while flag > 0:
         name = dss.lines.name
         dss.circuit.set_active_element(f"Line.{name}")
@@ -268,7 +277,26 @@ def find_relay_line(dss, relay_bus: str) -> str:
         if b2 == target:
             return f"Line.{name}"
         flag = dss.lines.next()
+
+    # Critério secundário: relay_bus é nó raiz — pega linha com bus1==relay
+    # e menor comprimento (primeiro segmento do tronco)
+    candidates = []
+    flag = dss.lines.first()
+    while flag > 0:
+        name = dss.lines.name
+        dss.circuit.set_active_element(f"Line.{name}")
+        b1 = _norm_bus(dss.cktelement.bus_names[0])
+        if b1 == target:
+            dss.lines.name = name
+            candidates.append((dss.lines.length, name))
+        flag = dss.lines.next()
+
+    if candidates:
+        candidates.sort()          # ordena por comprimento crescente
+        chosen = candidates[0][1]
+        return f"Line.{chosen}"
+
     raise ValueError(
-        f"Nenhuma linha encontrada com bus2={relay_bus}. "
+        f"Nenhuma linha encontrada conectada a relay_bus={relay_bus}. "
         f"Verifique se RELAY_BUS está correto."
     )
