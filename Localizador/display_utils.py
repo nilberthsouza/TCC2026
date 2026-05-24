@@ -107,3 +107,67 @@ def print_debug_1ph(fault_bus: str, ref_dist: float,
     print(f"  denominador  : Im(z1_mi * Icomp * dIcomp*)  = {den:>+.6f}  [Ohm/mi * A^2]")
     print(f"  d_mi         : num/den = {d_mi:>+.6f} mi  (esperado: {ref_dist} mi)")
     print()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Tabelas multi-folha
+# ─────────────────────────────────────────────────────────────────────────────
+
+def print_fault_header(fault_bus: str, ref_dist: float) -> None:
+    """Cabeçalho de seção para cada barra de falta no loop multi-folha."""
+    print(f"\n{'─' * W}")
+    print(f"  FALTA EM: {fault_bus}   |   Distância real ao relay: {ref_dist:.4f} mi")
+    print(f"{'─' * W}")
+
+
+def print_valid_results(rows: list[tuple]) -> None:
+    """
+    Tabela de caminhos válidos (não descartados).
+    rows: [(folha, d_mi, barra_candidata, dist_real_barra, erro_mi, erro_pct), ...]
+    """
+    hdr = (f"  {'Folha':<10} {'d_mi est.':>10}  {'Barra cand.':>11}"
+           f"  {'Dist. real':>10}  {'Erro (mi)':>10}  {'Erro (%)':>9}")
+    print(f"\n  [VÁLIDOS]")
+    print(hdr)
+    print(f"  {'-' * 68}")
+    if not rows:
+        print(f"  {'(nenhum caminho válido)':}")
+        return
+    for (folha, d_mi, cand, dist_real, erro_mi, erro_pct) in rows:
+        print(f"  {folha:<10} {d_mi:>10.4f}  {cand:>11}"
+              f"  {dist_real:>10.4f}  {erro_mi:>+10.4f}  {erro_pct:>+9.2f}%")
+
+
+def print_discarded_results(rows: list[tuple]) -> None:
+    """
+    Tabela de caminhos descartados.
+    rows: [(folha, d_mi, L_folha, motivo), ...]
+    """
+    hdr = (f"  {'Folha':<10} {'d_mi est.':>10}  {'L_folha':>9}  {'Motivo':}")
+    print(f"\n  [DESCARTADOS]")
+    print(hdr)
+    print(f"  {'-' * 52}")
+    if not rows:
+        print(f"  {'(nenhum descartado)':}")
+        return
+    for (folha, d_mi, L_folha, motivo) in rows:
+        d_str = f"{d_mi:>10.4f}" if d_mi is not None else f"{'None':>10}"
+        print(f"  {folha:<10} {d_str}  {L_folha:>9.4f}  {motivo}")
+
+
+def print_consolidated_table(rows: list[tuple]) -> None:
+    """
+    Tabela consolidada final (modo relay=slack).
+    rows: [(fault_bus, folha_vencedora, barra_cand, dist_real, d_mi, erro_mi, erro_pct), ...]
+    """
+    section("TABELA CONSOLIDADA — MELHOR RESULTADO POR BARRA DE FALTA")
+    hdr = (f"  {'Falta':<8} {'Folha venc.':>12} {'Barra cand.':>12}"
+           f"  {'Dist. real':>10}  {'d_mi':>10}  {'Erro (mi)':>10}  {'Erro (%)':>9}")
+    print(hdr)
+    print(f"  {'-' * 80}")
+    for row in rows:
+        if row is None:
+            continue
+        fault_bus, folha, cand, dist_real, d_mi, erro_mi, erro_pct = row
+        print(f"  {fault_bus:<8} {folha:>12} {cand:>12}"
+              f"  {dist_real:>10.4f}  {d_mi:>10.4f}  {erro_mi:>+10.4f}  {erro_pct:>+9.2f}%")

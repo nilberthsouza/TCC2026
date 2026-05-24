@@ -181,3 +181,70 @@ def find_feeder_path(graph: dict, relay_bus: str,
     Usado para calcular Z1L e Z0L do alimentador inteiro (sem conhecer a falta).
     """
     return find_shortest_path(graph, relay_bus, farthest_bus)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Multi-folha: folhas, distâncias acumuladas, barra mais próxima
+# ─────────────────────────────────────────────────────────────────────────────
+
+def find_leaves(graph: dict, relay_bus: str) -> list[str]:
+    """
+    Retorna todas as barras folha do grafo (grau 1), excluindo relay_bus.
+    Uma barra folha tem apenas uma conexão — é terminal de ramal.
+    """
+    relay = _norm_bus(relay_bus)
+    return [bus for bus, neighbors in graph.items()
+            if len(neighbors) == 1 and bus != relay]
+
+
+def get_all_distances_from_relay(graph: dict, relay_bus: str) -> dict[str, float]:
+    """
+    BFS ponderado a partir de relay_bus.
+    Retorna {barra: distancia_acumulada_mi} para todas as barras alcançáveis.
+    """
+    origin = _norm_bus(relay_bus)
+    distances = {origin: 0.0}
+    queue = deque([(origin, 0.0)])
+    while queue:
+        node, dist_so_far = queue.popleft()
+        for (nb, name, length, r1, x1, r0, x0) in graph[node]:
+            if nb not in distances:
+                new_dist = dist_so_far + length
+                distances[nb] = new_dist
+                queue.append((nb, new_dist))
+    return distances
+
+
+def find_nearest_bus(distances_from_relay: dict[str, float],
+                     d_mi: float,
+                     path: list[tuple]) -> str:
+    """
+    Dado d_mi estimado pelo Takagi e o caminho relay → folha,
+    retorna a barra do caminho cuja distância acumulada ao relay
+    é mais próxima de d_mi (por valor absoluto).
+    """
+    best_bus  = None
+    best_diff = float("inf")
+    for (name, b_from, b_to, length, r1, x1, r0, x0) in path:
+        for bus in (b_from, b_to):
+            dist = distances_from_relay.get(bus, float("inf"))
+            diff = abs(dist - d_mi)
+            if diff < best_diff:
+                best_diff = diff
+                best_bus  = bus
+    return best_bus
+
+
+def build_leaves_cache(graph: dict, relay_bus: str,
+                       leaves: list[str]) -> dict[str, tuple]:
+    """
+    Para cada folha calcula e armazena (path, Z1L, Z0L, L_folha).
+    Retorna dict {folha: (path, Z1L, Z0L, L_folha)}.
+    """
+    cache = {}
+    for leaf in leaves:
+        path = find_shortest_path(graph, relay_bus, leaf)
+        if path:
+            Z1L, Z0L, L = path_sequence_impedances(path)
+            cache[leaf] = (path, Z1L, Z0L, L)
+    return cache
