@@ -23,18 +23,27 @@ from display_utils   import (section, pline, fmt_z, W,
                               print_bases, print_linecode,
                               print_thevenin, print_debug_1ph)
 
-# ─────────────────────────────────────────────────────────────────────────────
-# CONFIGURAÇÕES
-# ─────────────────────────────────────────────────────────────────────────────
-#DSS_FILE     = r"C:\Users\nilbe\Documents\DISCIPLINAS\TCC2026\Localizador\34Bus\34busModTotal14mi.dss"
-DSS_FILE     = r"C:\Users\nilbe\Documents\DISCIPLINAS\TCC2026\Localizador\69bus.dss"
+# Defina o sistema manualmente aqui (1 para o sistema de 34 barras, 2 para o de 69 barras)
+SISTEMA = 1
 
-#RELAY_BUS    = "812"
-RELAY_BUS    = "12"
-#RELAY_LINE   ="Line.L5"
-RELAY_LINE   ="Line.L11_12"
-#FAULT_BUSES  = ["850","854","822","834","840","848"]
-FAULT_BUSES  = ["19","27","32","36","38","45",]
+if SISTEMA == 1:
+    DSS_FILE = r"C:\Users\nilbe\Documents\DISCIPLINAS\TCC2026\Localizador\34Bus\34busModTotal14mi.dss"
+    RELAY_BUS = "812"
+    RELAY_LINE = "Line.L5"
+    FAULT_BUSES = ["850", "854", "822", "834", "840", "848"]
+    #REF_LINECODE = "300"
+
+elif SISTEMA == 2:
+    DSS_FILE = r"C:\Users\nilbe\Documents\DISCIPLINAS\TCC2026\Localizador\69bus.dss"
+    RELAY_BUS = "12"
+    RELAY_LINE = "Line.L11_12"
+    FAULT_BUSES = ["19", "27", "32", "36", "38", "45"]
+    #REF_LINECODE = "300"
+
+# Variáveis globais/comuns a ambos os sistemas
+
+SBASE_MVA = 40.0
+SBASE = SBASE_MVA * 1e6
 
 REF_LINECODE = "300"
 SBASE_MVA    = 40.0
@@ -70,10 +79,10 @@ print_bases(RELAY_BUS, RELAY_LINE, SBASE_MVA, Vln, Vll, Ibase, Zbase)
 # ─────────────────────────────────────────────────────────────────────────────
 # ETAPA 1b — PARÂMETROS DO LINECODE DE REFERÊNCIA
 # ─────────────────────────────────────────────────────────────────────────────
-r1_ref, x1_ref, r0_ref, x0_ref = get_linecode_params(dss, REF_LINECODE)
-Z1_ref_per_mi = complex(r1_ref, x1_ref)
-Z0_ref_per_mi = complex(r0_ref, x0_ref)
-print_linecode(REF_LINECODE, r1_ref, x1_ref, r0_ref, x0_ref)
+#r1_ref, x1_ref, r0_ref, x0_ref = get_linecode_params(dss, REF_LINECODE)
+#Z1_ref_per_mi = complex(r1_ref, x1_ref)
+#Z0_ref_per_mi = complex(r0_ref, x0_ref)
+#print_linecode(REF_LINECODE, r1_ref, x1_ref, r0_ref, x0_ref)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # ETAPA 1c — IMPEDÂNCIAS DO ALIMENTADOR INTEIRO (relay -> barra mais distante)
