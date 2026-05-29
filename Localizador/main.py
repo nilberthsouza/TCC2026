@@ -29,7 +29,7 @@ from display_utils  import (section, pline, fmt_z, W,
 # ─────────────────────────────────────────────────────────────────────────────
 # CONFIGURAÇÕES
 # ─────────────────────────────────────────────────────────────────────────────
-SISTEMA = 2
+SISTEMA = 1
 
 if SISTEMA == 1:
     DSS_FILE    = r"C:\Users\nilbe\Documents\DISCIPLINAS\TCC2026\Localizador\34Bus\34busModTotal14mi.dss"

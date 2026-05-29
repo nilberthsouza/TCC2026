@@ -248,7 +248,7 @@ CalcVoltageBases
 !New Fault.Falta_854_F1 bus1=848.1 phases=1 r=0.001
 
 ! Ajustando o multiplicador de carga (corrigido para um único '=')
-!Set LoadMult=7.2
+Set LoadMult=7.2
 
 ! Executando a simulação
 Solve

@@ -172,7 +172,7 @@ New Load.L70   Bus1=70  Phases=3  kV=100  kW=9.33     kvar=6.66
 !  SOLUCAO
 ! ============================================================
 
-Set VoltageBases=[100]
+Set VoltageBases=[100 11]
 CalcVoltageBases
 
 Solve
