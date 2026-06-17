@@ -29,7 +29,7 @@ New Circuit.ModeleTeste
 !  normcode: unidades SI (raio/GMR em metros, Rac em ohm/km)
 ! ============================================================
 
-! Cabo de Alumínio com Alma de Aço (CAA) - 636 kcmil GROSBEAK - transmissão AT
+! Cabo de Alumnio com Alma de Ao (CAA) - 636 kcmil GROSBEAK - transmisso AT
 New WireData.CAA_GROSBEAK
 ~ Rac=0.0986      ! ohm/km a 50 Hz, 75 C
 ~ GMRac=0.00950   ! m
@@ -45,7 +45,7 @@ New WireData.CAA_LINNET
 ~ normamps=400
 ~ emergamps=480
 
-! Cabo de Alumínio (CA) 4 AWG - distribuição MT
+! Cabo de Alumnio (CA) 4 AWG - distribuio MT
 New WireData.CA_4AWG
 ~ Rac=0.5280
 ~ GMRac=0.00330
@@ -53,7 +53,7 @@ New WireData.CA_4AWG
 ~ normamps=200
 ~ emergamps=240
 
-! CA 2 AWG - distribuição MT média
+! CA 2 AWG - distribuio MT mdia
 New WireData.CA_2AWG
 ~ Rac=0.3320
 ~ GMRac=0.00416
@@ -214,89 +214,158 @@ New LineGeometry.GEO_BARRAMENTO nconds=3  nphases=3  reduce=no
 ! ============================================================
 
 ! --- LC_BARRAMENTO ---
-New Line.L3_4    Bus1=3  Bus2=4  ~ LineCode=LC_BARRAMENTO  Geometry=GEO_BARRAMENTO  Length=1.000000
+New Line.L3_4    Bus1=3  Bus2=4  
+~ LineCode=LC_BARRAMENTO  Length=1.000000
 
 ! --- LC_AT_TRONCO ---
-New Line.L1_2    Bus1=1  Bus2=2  ~ LineCode=LC_AT_TRONCO   Geometry=GEO_AT_TRONCO   Length=1.000000
-New Line.L2_3    Bus1=2  Bus2=3  ~ LineCode=LC_AT_TRONCO   Geometry=GEO_AT_TRONCO   Length=1.000000
-New Line.L4_5    Bus1=4  Bus2=5  ~ LineCode=LC_AT_TRONCO   Geometry=GEO_AT_TRONCO   Length=3.000000
+New Line.L1_2    Bus1=1  Bus2=2  
+~ LineCode=LC_AT_TRONCO   Length=1.000000
+New Line.L2_3    Bus1=2  Bus2=3  
+~ LineCode=LC_AT_TRONCO   Length=1.000000
+New Line.L4_5    Bus1=4  Bus2=5  
+~ LineCode=LC_AT_TRONCO   Length=3.000000
 
 ! --- LC_AT_RAMAL ---
-New Line.L3_29   Bus1=3  Bus2=29 ~ LineCode=LC_AT_RAMAL    Geometry=GEO_AT_RAMAL    Length=0.068746
-New Line.L4_37   Bus1=4  Bus2=37 ~ LineCode=LC_AT_RAMAL    Geometry=GEO_AT_RAMAL    Length=0.068746
-New Line.L5_48   Bus1=5  Bus2=48 ~ LineCode=LC_AT_RAMAL    Geometry=GEO_AT_RAMAL    Length=0.053121
-New Line.L29_30  Bus1=29 Bus2=30 ~ LineCode=LC_AT_RAMAL    Geometry=GEO_AT_RAMAL    Length=1.000000
-New Line.L37_38  Bus1=37 Bus2=38 ~ LineCode=LC_AT_RAMAL    Geometry=GEO_AT_RAMAL    Length=1.000000
-New Line.L48_49  Bus1=48 Bus2=49 ~ LineCode=LC_AT_RAMAL    Geometry=GEO_AT_RAMAL    Length=1.329587
-New Line.L49_50  Bus1=49 Bus2=50 ~ LineCode=LC_AT_RAMAL    Geometry=GEO_AT_RAMAL    Length=4.528067
-New Line.L50_51  Bus1=50 Bus2=51 ~ LineCode=LC_AT_RAMAL    Geometry=GEO_AT_RAMAL    Length=1.284418
+New Line.L3_29   Bus1=3  Bus2=29 
+~ LineCode=LC_AT_RAMAL    Length=0.068746
+New Line.L4_37   Bus1=4  Bus2=37 
+~ LineCode=LC_AT_RAMAL    Length=0.068746
+New Line.L5_48   Bus1=5  Bus2=48 
+~ LineCode=LC_AT_RAMAL    Length=0.053121
+New Line.L29_30  Bus1=29 Bus2=30 
+~ LineCode=LC_AT_RAMAL    Length=1.000000
+New Line.L37_38  Bus1=37 Bus2=38 
+~ LineCode=LC_AT_RAMAL    Length=1.000000
+New Line.L48_49  Bus1=48 Bus2=49 
+~ LineCode=LC_AT_RAMAL    Length=1.329587
+New Line.L49_50  Bus1=49 Bus2=50 
+~ LineCode=LC_AT_RAMAL    Length=4.528067
+New Line.L50_51  Bus1=50 Bus2=51 
+~ LineCode=LC_AT_RAMAL    Length=1.284418
 
 ! --- LC_MT_ALTA_R ---
-New Line.L6_7    Bus1=6  Bus2=7  ~ LineCode=LC_MT_ALTA_R   Geometry=GEO_MT_ALTA_R   Length=1.301105
-New Line.L7_8    Bus1=7  Bus2=8  ~ LineCode=LC_MT_ALTA_R   Geometry=GEO_MT_ALTA_R   Length=1.354783
-New Line.L8_9    Bus1=8  Bus2=9  ~ LineCode=LC_MT_ALTA_R   Geometry=GEO_MT_ALTA_R   Length=0.327765
-New Line.L9_10   Bus1=9  Bus2=10 ~ LineCode=LC_MT_ALTA_R   Geometry=GEO_MT_ALTA_R   Length=0.175261
-New Line.L9_52   Bus1=9  Bus2=52 ~ LineCode=LC_MT_ALTA_R   Geometry=GEO_MT_ALTA_R   Length=0.329907
-New Line.L10_54  Bus1=10 Bus2=54 ~ LineCode=LC_MT_ALTA_R   Geometry=GEO_MT_ALTA_R   Length=0.618582
-New Line.L54_55  Bus1=54 Bus2=55 ~ LineCode=LC_MT_ALTA_R   Geometry=GEO_MT_ALTA_R   Length=0.721656
-New Line.L55_56  Bus1=55 Bus2=56 ~ LineCode=LC_MT_ALTA_R   Geometry=GEO_MT_ALTA_R   Length=1.010245
-New Line.L56_57  Bus1=56 Bus2=57 ~ LineCode=LC_MT_ALTA_R   Geometry=GEO_MT_ALTA_R   Length=1.000000
-New Line.L61_62  Bus1=61 Bus2=62 ~ LineCode=LC_MT_ALTA_R   Geometry=GEO_MT_ALTA_R   Length=1.804105
-New Line.L63_64  Bus1=63 Bus2=64 ~ LineCode=LC_MT_ALTA_R   Geometry=GEO_MT_ALTA_R   Length=0.515464
-New Line.L64_65  Bus1=64 Bus2=65 ~ LineCode=LC_MT_ALTA_R   Geometry=GEO_MT_ALTA_R   Length=2.525539
-New Line.L65_66  Bus1=65 Bus2=66 ~ LineCode=LC_MT_ALTA_R   Geometry=GEO_MT_ALTA_R   Length=3.700974
+New Line.L6_7    Bus1=6  Bus2=7  
+~ LineCode=LC_MT_ALTA_R   Length=1.301105
+New Line.L7_8    Bus1=7  Bus2=8  
+~ LineCode=LC_MT_ALTA_R   Length=1.354783
+New Line.L8_9    Bus1=8  Bus2=9  
+~ LineCode=LC_MT_ALTA_R   Length=0.327765
+New Line.L9_10   Bus1=9  Bus2=10 
+~ LineCode=LC_MT_ALTA_R   Length=0.175261
+New Line.L9_52   Bus1=9  Bus2=52 
+~ LineCode=LC_MT_ALTA_R   Length=0.329907
+New Line.L10_54  Bus1=10 Bus2=54 
+~ LineCode=LC_MT_ALTA_R   Length=0.618582
+New Line.L54_55  Bus1=54 Bus2=55 
+~ LineCode=LC_MT_ALTA_R   Length=0.721656
+New Line.L55_56  Bus1=55 Bus2=56 
+~ LineCode=LC_MT_ALTA_R   Length=1.010245
+New Line.L56_57  Bus1=56 Bus2=57 
+~ LineCode=LC_MT_ALTA_R   Length=1.000000
+New Line.L61_62  Bus1=61 Bus2=62 
+~ LineCode=LC_MT_ALTA_R   Length=1.804105
+New Line.L63_64  Bus1=63 Bus2=64 
+~ LineCode=LC_MT_ALTA_R   Length=0.515464
+New Line.L64_65  Bus1=64 Bus2=65 
+~ LineCode=LC_MT_ALTA_R   Length=2.525539
+New Line.L65_66  Bus1=65 Bus2=66 
+~ LineCode=LC_MT_ALTA_R   Length=3.700974
 
 ! --- LC_MT_MEDIO ---
-New Line.L5_6    Bus1=5  Bus2=6  ~ LineCode=LC_MT_MEDIO    Geometry=GEO_MT_MEDIO    Length=0.343142
-New Line.L38_39  Bus1=38 Bus2=39 ~ LineCode=LC_MT_MEDIO    Geometry=GEO_MT_MEDIO    Length=1.439428
-New Line.L39_40  Bus1=39 Bus2=40 ~ LineCode=LC_MT_MEDIO    Geometry=GEO_MT_MEDIO    Length=0.415573
-New Line.L41_42  Bus1=41 Bus2=42 ~ LineCode=LC_MT_MEDIO    Geometry=GEO_MT_MEDIO    Length=9.958924
-New Line.L42_43  Bus1=42 Bus2=43 ~ LineCode=LC_MT_MEDIO    Geometry=GEO_MT_MEDIO    Length=4.237046
-New Line.L43_44  Bus1=43 Bus2=44 ~ LineCode=LC_MT_MEDIO    Geometry=GEO_MT_MEDIO    Length=0.560495
-New Line.L44_45  Bus1=44 Bus2=45 ~ LineCode=LC_MT_MEDIO    Geometry=GEO_MT_MEDIO    Length=0.125769
-New Line.L45_46  Bus1=45 Bus2=46 ~ LineCode=LC_MT_MEDIO    Geometry=GEO_MT_MEDIO    Length=1.489175
+New Line.L5_6    Bus1=5  Bus2=6  
+~ LineCode=LC_MT_MEDIO    Length=0.343142
+New Line.L38_39  Bus1=38 Bus2=39 
+~ LineCode=LC_MT_MEDIO    Length=1.439428
+New Line.L39_40  Bus1=39 Bus2=40 
+~ LineCode=LC_MT_MEDIO    Length=0.415573
+New Line.L41_42  Bus1=41 Bus2=42 
+~ LineCode=LC_MT_MEDIO    Length=9.958924
+New Line.L42_43  Bus1=42 Bus2=43 
+~ LineCode=LC_MT_MEDIO    Length=4.237046
+New Line.L43_44  Bus1=43 Bus2=44 
+~ LineCode=LC_MT_MEDIO    Length=0.560495
+New Line.L44_45  Bus1=44 Bus2=45 
+~ LineCode=LC_MT_MEDIO    Length=0.125769
+New Line.L45_46  Bus1=45 Bus2=46 
+~ LineCode=LC_MT_MEDIO    Length=1.489175
 
 ! --- LC_MT_LEVE ---
-New Line.L40_41  Bus1=40 Bus2=41 ~ LineCode=LC_MT_LEVE     Geometry=GEO_MT_LEVE     Length=1.334441
-New Line.L46_47  Bus1=46 Bus2=47 ~ LineCode=LC_MT_LEVE     Geometry=GEO_MT_LEVE     Length=0.667460
+New Line.L40_41  Bus1=40 Bus2=41 
+~ LineCode=LC_MT_LEVE     Length=1.334441
+New Line.L46_47  Bus1=46 Bus2=47 
+~ LineCode=LC_MT_LEVE     Length=0.667460
 
 ! --- LC_RESISTIVA ---
-New Line.L62_63  Bus1=62 Bus2=63 ~ LineCode=LC_RESISTIVA   Geometry=GEO_RESISTIVA   Length=1.000000
+New Line.L62_63  Bus1=62 Bus2=63 
+~ LineCode=LC_RESISTIVA   Length=1.000000
 
 ! --- LC_BT_R_DOM ---
-New Line.L10_11  Bus1=10 Bus2=11 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=2.365006
-New Line.L11_12  Bus1=11 Bus2=12 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=0.540574
-New Line.L12_13  Bus1=12 Bus2=13 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=2.054267
-New Line.L13_14  Bus1=13 Bus2=14 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=2.974201
-New Line.L14_15  Bus1=14 Bus2=15 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=3.014765
-New Line.L15_16  Bus1=15 Bus2=16 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=3.055293
-New Line.L16_17  Bus1=16 Bus2=17 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=0.567716
-New Line.L17_18  Bus1=17 Bus2=18 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=1.081150
-New Line.L18_19  Bus1=18 Bus2=19 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=0.013575
-New Line.L19_20  Bus1=19 Bus2=20 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=0.945554
-New Line.L20_21  Bus1=20 Bus2=21 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=0.608149
-New Line.L21_22  Bus1=21 Bus2=22 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=0.986433
-New Line.L22_23  Bus1=22 Bus2=23 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=0.040429
-New Line.L23_24  Bus1=23 Bus2=24 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=0.459440
-New Line.L24_25  Bus1=24 Bus2=25 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=1.000000
-New Line.L25_26  Bus1=25 Bus2=26 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=2.162235
-New Line.L26_27  Bus1=26 Bus2=27 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=0.891999
-New Line.L27_28  Bus1=27 Bus2=28 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=0.500146
-New Line.L30_31  Bus1=30 Bus2=31 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=1.148760
-New Line.L31_32  Bus1=31 Bus2=32 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=0.202728
-New Line.L32_33  Bus1=32 Bus2=33 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=1.014504
-New Line.L33_34  Bus1=33 Bus2=34 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=2.422344
-New Line.L34_35  Bus1=34 Bus2=35 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=4.933086
-New Line.L35_36  Bus1=35 Bus2=36 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=4.256537
-New Line.L52_53  Bus1=52 Bus2=53 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=0.958440
-New Line.L57_58  Bus1=57 Bus2=58 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=4.591624
-New Line.L58_59  Bus1=58 Bus2=59 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=2.263994
-New Line.L59_60  Bus1=59 Bus2=60 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=0.878461
-New Line.L60_61  Bus1=60 Bus2=61 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=1.114870
-New Line.L12_67  Bus1=12 Bus2=67 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=0.581003
-New Line.L67_68  Bus1=67 Bus2=68 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=0.013570
-New Line.L13_69  Bus1=13 Bus2=69 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=2.135249
-New Line.L69_70  Bus1=69 Bus2=70 ~ LineCode=LC_BT_R_DOM    Geometry=GEO_BT_R_DOM    Length=0.013575
+New Line.L10_11  Bus1=10 Bus2=11 
+~ LineCode=LC_BT_R_DOM    Length=2.365006
+New Line.L11_12  Bus1=11 Bus2=12 
+~ LineCode=LC_BT_R_DOM    Length=0.540574
+New Line.L12_13  Bus1=12 Bus2=13 
+~ LineCode=LC_BT_R_DOM    Length=2.054267
+New Line.L13_14  Bus1=13 Bus2=14 
+~ LineCode=LC_BT_R_DOM    Length=2.974201
+New Line.L14_15  Bus1=14 Bus2=15 
+~ LineCode=LC_BT_R_DOM    Length=3.014765
+New Line.L15_16  Bus1=15 Bus2=16 
+~ LineCode=LC_BT_R_DOM    Length=3.055293
+New Line.L16_17  Bus1=16 Bus2=17 
+~ LineCode=LC_BT_R_DOM    Length=0.567716
+New Line.L17_18  Bus1=17 Bus2=18 
+~ LineCode=LC_BT_R_DOM    Length=1.081150
+New Line.L18_19  Bus1=18 Bus2=19 
+~ LineCode=LC_BT_R_DOM    Length=0.013575
+New Line.L19_20  Bus1=19 Bus2=20 
+~ LineCode=LC_BT_R_DOM    Length=0.945554
+New Line.L20_21  Bus1=20 Bus2=21 
+~ LineCode=LC_BT_R_DOM    Length=0.608149
+New Line.L21_22  Bus1=21 Bus2=22 
+~ LineCode=LC_BT_R_DOM    Length=0.986433
+New Line.L22_23  Bus1=22 Bus2=23 
+~ LineCode=LC_BT_R_DOM    Length=0.040429
+New Line.L23_24  Bus1=23 Bus2=24 
+~ LineCode=LC_BT_R_DOM    Length=0.459440
+New Line.L24_25  Bus1=24 Bus2=25 
+~ LineCode=LC_BT_R_DOM    Length=1.000000
+New Line.L25_26  Bus1=25 Bus2=26 
+~ LineCode=LC_BT_R_DOM    Length=2.162235
+New Line.L26_27  Bus1=26 Bus2=27 
+~ LineCode=LC_BT_R_DOM    Length=0.891999
+New Line.L27_28  Bus1=27 Bus2=28 
+~ LineCode=LC_BT_R_DOM    Length=0.500146
+New Line.L30_31  Bus1=30 Bus2=31 
+~ LineCode=LC_BT_R_DOM    Length=1.148760
+New Line.L31_32  Bus1=31 Bus2=32 
+~ LineCode=LC_BT_R_DOM    Length=0.202728
+New Line.L32_33  Bus1=32 Bus2=33 
+~ LineCode=LC_BT_R_DOM    Length=1.014504
+New Line.L33_34  Bus1=33 Bus2=34 
+~ LineCode=LC_BT_R_DOM    Length=2.422344
+New Line.L34_35  Bus1=34 Bus2=35 
+~ LineCode=LC_BT_R_DOM    Length=4.933086
+New Line.L35_36  Bus1=35 Bus2=36 
+~ LineCode=LC_BT_R_DOM    Length=4.256537
+New Line.L52_53  Bus1=52 Bus2=53 
+~ LineCode=LC_BT_R_DOM    Length=0.958440
+New Line.L57_58  Bus1=57 Bus2=58 
+~ LineCode=LC_BT_R_DOM    Length=4.591624
+New Line.L58_59  Bus1=58 Bus2=59 
+~ LineCode=LC_BT_R_DOM    Length=2.263994
+New Line.L59_60  Bus1=59 Bus2=60 
+~ LineCode=LC_BT_R_DOM    Length=0.878461
+New Line.L60_61  Bus1=60 Bus2=61 
+~ LineCode=LC_BT_R_DOM    Length=1.114870
+New Line.L12_67  Bus1=12 Bus2=67 
+~ LineCode=LC_BT_R_DOM    Length=0.581003
+New Line.L67_68  Bus1=67 Bus2=68 
+~ LineCode=LC_BT_R_DOM    Length=0.013570
+New Line.L13_69  Bus1=13 Bus2=69 
+~ LineCode=LC_BT_R_DOM    Length=2.135249
+New Line.L69_70  Bus1=69 Bus2=70 
+~ LineCode=LC_BT_R_DOM    Length=0.013575
 
 ! ============================================================
 !  CARGAS
@@ -356,8 +425,7 @@ New Load.L70   Bus1=70  Phases=3  kV=100  kW=9.33       kvar=6.66
 ! ============================================================
 !  SOLUCAO
 ! ============================================================
-
-Set VoltageBases=[100]
+Set VoltageBases=[100]    ! <-- adicionar esta linha
 CalcVoltageBases
 
 Solve
