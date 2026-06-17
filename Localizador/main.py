@@ -32,7 +32,8 @@ from display_utils  import (section, pline, fmt_z, W,
 SISTEMA = 1
 
 if SISTEMA == 1:
-    DSS_FILE    = r"C:\Users\nilbe\Documents\DISCIPLINAS\TCC2026\Localizador\34Bus\34busModTotal14mi.dss"
+
+    DSS_FILE    = r"C:\Users\nilbe\OneDrive\Documentos\DISCIPLINAS\TCC2026\Localizador\34Bus\34busModTotal14mi.dss"
     RELAY_BUS   = "812"
     FAULT_BUSES = ["850", "854", "822", "834", "840", "848"]
 
