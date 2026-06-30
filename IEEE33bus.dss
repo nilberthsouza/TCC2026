@@ -1,0 +1,126 @@
+! IEEE 33 Bus Test Feeder - converted from MATLAB IEEE33 function
+! baseMVA = 1 MVA, baseKV = 12.66 kV (3-phase)
+! All loads: 3-phase balanced, Wye connection, constant power (Model=1)
+
+Clear
+Set DefaultBaseFrequency=60
+
+New object=circuit.ieee33
+~ basekv=12.66 pu=1.0 angle=0
+
+! ---------------------------------------------------------------------------
+! Substation (Slack Bus = Bus 1)
+! ---------------------------------------------------------------------------
+New Transformer.SubXF Phases=3 Windings=2 Xhl=0.01
+~ wdg=1 bus=sourcebus conn=Delta kv=115    kva=10000  %r=0.0001
+~ wdg=2 bus=1         conn=wye   kv=12.66  kva=10000  %r=0.0001
+
+! ---------------------------------------------------------------------------
+! Lines  (r and x in Ohms/total length; baseZ = 12.66^2/1 = 160.2756 Ohm)
+! Impedances below are already total branch impedances in Ohms (from MATLAB data_l).
+! They are converted here directly to p.u. by specifying R1/X1 in Ohms and
+! using the linecode approach for simplicity — or more straightforwardly,
+! we define each line with its total R and X via "geometry" or direct rmatrix.
+!
+! Simplest DSS approach for radial networks with known total-Z:
+!   New Line.Lx  Bus1=n  Bus2=m  R1=<ohm>  X1=<ohm>  C1=0  Length=1  units=none
+!   (Length=1 so R1/X1 are already the total branch impedance in ohms)
+! ---------------------------------------------------------------------------
+
+! Main feeder  (buses 1-18)
+New Line.L1_2    Phases=3 Bus1=1   Bus2=2   R1=0.0922  X1=0.0470  C1=0  Length=1  units=none
+New Line.L2_3    Phases=3 Bus1=2   Bus2=3   R1=0.4930  X1=0.2511  C1=0  Length=1  units=none
+New Line.L3_4    Phases=3 Bus1=3   Bus2=4   R1=0.3660  X1=0.1864  C1=0  Length=1  units=none
+New Line.L4_5    Phases=3 Bus1=4   Bus2=5   R1=0.3811  X1=0.1941  C1=0  Length=1  units=none
+New Line.L5_6    Phases=3 Bus1=5   Bus2=6   R1=0.8190  X1=0.7070  C1=0  Length=1  units=none
+New Line.L6_7    Phases=3 Bus1=6   Bus2=7   R1=0.1872  X1=0.6188  C1=0  Length=1  units=none
+New Line.L7_8    Phases=3 Bus1=7   Bus2=8   R1=0.7114  X1=0.2351  C1=0  Length=1  units=none
+New Line.L8_9    Phases=3 Bus1=8   Bus2=9   R1=1.0300  X1=0.7400  C1=0  Length=1  units=none
+New Line.L9_10   Phases=3 Bus1=9   Bus2=10  R1=1.0440  X1=0.7400  C1=0  Length=1  units=none
+New Line.L10_11  Phases=3 Bus1=10  Bus2=11  R1=0.1966  X1=0.0650  C1=0  Length=1  units=none
+New Line.L11_12  Phases=3 Bus1=11  Bus2=12  R1=0.3744  X1=0.1238  C1=0  Length=1  units=none
+New Line.L12_13  Phases=3 Bus1=12  Bus2=13  R1=1.4680  X1=1.1550  C1=0  Length=1  units=none
+New Line.L13_14  Phases=3 Bus1=13  Bus2=14  R1=0.5416  X1=0.7129  C1=0  Length=1  units=none
+New Line.L14_15  Phases=3 Bus1=14  Bus2=15  R1=0.5910  X1=0.5260  C1=0  Length=1  units=none
+New Line.L15_16  Phases=3 Bus1=15  Bus2=16  R1=0.7463  X1=0.5450  C1=0  Length=1  units=none
+New Line.L16_17  Phases=3 Bus1=16  Bus2=17  R1=1.2890  X1=1.7210  C1=0  Length=1  units=none
+New Line.L17_18  Phases=3 Bus1=17  Bus2=18  R1=0.7320  X1=0.5740  C1=0  Length=1  units=none
+
+! Lateral 1: buses 2-19-20-21-22
+New Line.L2_19   Phases=3 Bus1=2   Bus2=19  R1=0.1640  X1=0.1565  C1=0  Length=1  units=none
+New Line.L19_20  Phases=3 Bus1=19  Bus2=20  R1=1.5042  X1=1.3554  C1=0  Length=1  units=none
+New Line.L20_21  Phases=3 Bus1=20  Bus2=21  R1=0.4095  X1=0.4784  C1=0  Length=1  units=none
+New Line.L21_22  Phases=3 Bus1=21  Bus2=22  R1=0.7089  X1=0.9373  C1=0  Length=1  units=none
+
+! Lateral 2: buses 3-23-24-25
+New Line.L3_23   Phases=3 Bus1=3   Bus2=23  R1=0.4512  X1=0.3083  C1=0  Length=1  units=none
+New Line.L23_24  Phases=3 Bus1=23  Bus2=24  R1=0.8980  X1=0.7091  C1=0  Length=1  units=none
+New Line.L24_25  Phases=3 Bus1=24  Bus2=25  R1=0.8960  X1=0.7011  C1=0  Length=1  units=none
+
+! Lateral 3: buses 6-26-27-28-29-30-31-32-33
+New Line.L6_26   Phases=3 Bus1=6   Bus2=26  R1=0.2030  X1=0.1034  C1=0  Length=1  units=none
+New Line.L26_27  Phases=3 Bus1=26  Bus2=27  R1=0.2842  X1=0.1447  C1=0  Length=1  units=none
+New Line.L27_28  Phases=3 Bus1=27  Bus2=28  R1=1.0590  X1=0.9337  C1=0  Length=1  units=none
+New Line.L28_29  Phases=3 Bus1=28  Bus2=29  R1=0.8042  X1=0.7006  C1=0  Length=1  units=none
+New Line.L29_30  Phases=3 Bus1=29  Bus2=30  R1=0.5075  X1=0.2585  C1=0  Length=1  units=none
+New Line.L30_31  Phases=3 Bus1=30  Bus2=31  R1=0.9744  X1=0.9630  C1=0  Length=1  units=none
+New Line.L31_32  Phases=3 Bus1=31  Bus2=32  R1=0.3105  X1=0.3619  C1=0  Length=1  units=none
+New Line.L32_33  Phases=3 Bus1=32  Bus2=33  R1=0.3410  X1=0.5302  C1=0  Length=1  units=none
+
+! ---------------------------------------------------------------------------
+! Loads  (kW and kVAr from MATLAB data_b columns 3-4; 3-phase balanced wye)
+! Bus 1 is slack (no load).
+! ---------------------------------------------------------------------------
+New Load.Load2   Bus1=2   Phases=3 Conn=Wye Model=1 kV=12.66 kW=100.0  kVAR=60.0
+New Load.Load3   Bus1=3   Phases=3 Conn=Wye Model=1 kV=12.66 kW=90.0   kVAR=40.0
+New Load.Load4   Bus1=4   Phases=3 Conn=Wye Model=1 kV=12.66 kW=120.0  kVAR=80.0
+New Load.Load5   Bus1=5   Phases=3 Conn=Wye Model=1 kV=12.66 kW=60.0   kVAR=30.0
+New Load.Load6   Bus1=6   Phases=3 Conn=Wye Model=1 kV=12.66 kW=60.0   kVAR=20.0
+New Load.Load7   Bus1=7   Phases=3 Conn=Wye Model=1 kV=12.66 kW=200.0  kVAR=100.0
+New Load.Load8   Bus1=8   Phases=3 Conn=Wye Model=1 kV=12.66 kW=200.0  kVAR=100.0
+New Load.Load9   Bus1=9   Phases=3 Conn=Wye Model=1 kV=12.66 kW=60.0   kVAR=20.0
+New Load.Load10  Bus1=10  Phases=3 Conn=Wye Model=1 kV=12.66 kW=60.0   kVAR=20.0
+New Load.Load11  Bus1=11  Phases=3 Conn=Wye Model=1 kV=12.66 kW=45.0   kVAR=30.0
+New Load.Load12  Bus1=12  Phases=3 Conn=Wye Model=1 kV=12.66 kW=60.0   kVAR=35.0
+New Load.Load13  Bus1=13  Phases=3 Conn=Wye Model=1 kV=12.66 kW=60.0   kVAR=35.0
+New Load.Load14  Bus1=14  Phases=3 Conn=Wye Model=1 kV=12.66 kW=120.0  kVAR=80.0
+New Load.Load15  Bus1=15  Phases=3 Conn=Wye Model=1 kV=12.66 kW=60.0   kVAR=10.0
+New Load.Load16  Bus1=16  Phases=3 Conn=Wye Model=1 kV=12.66 kW=60.0   kVAR=20.0
+New Load.Load17  Bus1=17  Phases=3 Conn=Wye Model=1 kV=12.66 kW=60.0   kVAR=20.0
+New Load.Load18  Bus1=18  Phases=3 Conn=Wye Model=1 kV=12.66 kW=90.0   kVAR=40.0
+New Load.Load19  Bus1=19  Phases=3 Conn=Wye Model=1 kV=12.66 kW=90.0   kVAR=40.0
+New Load.Load20  Bus1=20  Phases=3 Conn=Wye Model=1 kV=12.66 kW=90.0   kVAR=40.0
+New Load.Load21  Bus1=21  Phases=3 Conn=Wye Model=1 kV=12.66 kW=90.0   kVAR=40.0
+New Load.Load22  Bus1=22  Phases=3 Conn=Wye Model=1 kV=12.66 kW=90.0   kVAR=40.0
+New Load.Load23  Bus1=23  Phases=3 Conn=Wye Model=1 kV=12.66 kW=90.0   kVAR=50.0
+New Load.Load24  Bus1=24  Phases=3 Conn=Wye Model=1 kV=12.66 kW=420.0  kVAR=200.0
+New Load.Load25  Bus1=25  Phases=3 Conn=Wye Model=1 kV=12.66 kW=420.0  kVAR=200.0
+New Load.Load26  Bus1=26  Phases=3 Conn=Wye Model=1 kV=12.66 kW=60.0   kVAR=25.0
+New Load.Load27  Bus1=27  Phases=3 Conn=Wye Model=1 kV=12.66 kW=60.0   kVAR=25.0
+New Load.Load28  Bus1=28  Phases=3 Conn=Wye Model=1 kV=12.66 kW=60.0   kVAR=20.0
+New Load.Load29  Bus1=29  Phases=3 Conn=Wye Model=1 kV=12.66 kW=120.0  kVAR=70.0
+New Load.Load30  Bus1=30  Phases=3 Conn=Wye Model=1 kV=12.66 kW=200.0  kVAR=600.0
+New Load.Load31  Bus1=31  Phases=3 Conn=Wye Model=1 kV=12.66 kW=150.0  kVAR=70.0
+New Load.Load32  Bus1=32  Phases=3 Conn=Wye Model=1 kV=12.66 kW=210.0  kVAR=100.0
+New Load.Load33  Bus1=33  Phases=3 Conn=Wye Model=1 kV=12.66 kW=60.0   kVAR=40.0
+
+! ---------------------------------------------------------------------------
+! Generators (DG units from MATLAB data_g)
+!   Bus 1  -> slack (handled by circuit source above)
+!   Bus 18 -> 1.5 MW, Qmax=1 MVAr, Qmin=-1 MVAr
+!   Bus 33 -> 1.5 MW, Qmax=1 MVAr, Qmin=-1 MVAr
+! ---------------------------------------------------------------------------
+New Generator.DG18  Bus1=18  Phases=3 kV=12.66 kW=1500  kVAR=0  Vmaxpu=1.1  Vminpu=0.9  Model=1
+New Generator.DG33  Bus1=33  Phases=3 kV=12.66 kW=1500  kVAR=0  Vmaxpu=1.1  Vminpu=0.9  Model=1
+
+! ---------------------------------------------------------------------------
+! Voltage bases and solution
+! ---------------------------------------------------------------------------
+Set VoltageBases = "115, 12.66"
+CalcVoltageBases
+
+Solve
+
+! Uncomment below to inspect results
+!Show Voltages LN Nodes
+!Show Powers kVA Elements
