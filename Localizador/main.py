@@ -35,7 +35,13 @@ if SISTEMA == 1:
 
     DSS_FILE    = r"C:\Users\nilbe\OneDrive\Documentos\DISCIPLINAS\TCC2026\Localizador\34Bus\34busModTotal14mi.dss"
     RELAY_BUS   = "812"
-    FAULT_BUSES = ["850", "854", "822", "834", "840", "848"]
+    #FAULT_BUSES = ["850", "854", "822", "834", "840", "848"]"800", "802", "806", "808", "810",
+    FAULT_BUSES = [
+         "812", "814", "816", "818", "820",
+        "822", "824", "826", "828", "830", "832", "834", "836", "838", "840",
+        "842", "844", "846", "848", "850", "852", "854", "856", "858", "860",
+        "862", "864", "888", "890"
+    ]
 
 elif SISTEMA == 2:
     DSS_FILE    = r"C:\Users\nilbe\Documents\DISCIPLINAS\TCC2026\Localizador\69bus.dss"
